@@ -25,6 +25,17 @@
 - Added dummy `ExerciseSession` entries to `ContentView` to verify SwiftData `List` binding logic cleanly maps backwards through time based on `date`.
 - Re-verified complete project compilation.
 
+---
+### Issue 5: Camera & Vision Strategy
+**Status:** ✅ Completed
+**Description:** Finalize the Camera & ML Tracking Architecture using AVFoundation and Vision frameworks.
+
+**Work Accomplished:**
+- Built `CameraManager.swift` to handle AVFoundation front-facing video streams.
+- Built `VisionManager.swift` to digest video buffers via `VNDetectHumanBodyPoseRequest` for body joint extraction.
+- Established `TrackingState.swift` to handle UI feedback strings across error scenarios (low lighting, out of frame).
+- Injected `NSCameraUsageDescription` into the `project.pbxproj` file to satisfy iOS privacy requirements.
+
 *(Add future issues here as they are assigned)*
 ### Issue 3: Monthly Sword Progression & Freeze Logic
 **Status:** ✅ Completed
