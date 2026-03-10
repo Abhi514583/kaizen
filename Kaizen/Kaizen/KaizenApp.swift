@@ -12,8 +12,10 @@ import SwiftData
 struct KaizenApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
-            UserProgression.self,
+            UserProfile.self,
+            ExerciseSession.self,
+            DailySummary.self,
+            SwordProgress.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

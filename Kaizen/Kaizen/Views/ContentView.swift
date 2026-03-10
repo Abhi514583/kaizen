@@ -10,11 +10,11 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var progressions: [UserProgression]
-    @Query private var items: [Item]
+    @Query private var profiles: [UserProfile]
+    @Query(sort: \ExerciseSession.date, order: .reverse) private var sessions: [ExerciseSession]
     
-    private var progression: UserProgression? {
-        progressions.first
+    private var profile: UserProfile? {
+        profiles.first
     }
 
     var body: some View {
@@ -28,7 +28,7 @@ struct ContentView: View {
                     // Progression Stats Segment
                     HStack(spacing: UIConstants.Spacing.md) {
                         VStack(alignment: .leading) {
-                            Text(progression?.currentTier.rawValue ?? "Wooden")
+                            Text(profile?.currentSwordTier.rawValue ?? "Wooden")
                                 .font(.kaizenSectionHeader)
                                 .foregroundColor(.kaizenSage)
                             Text("Sword Tier")
@@ -39,7 +39,7 @@ struct ContentView: View {
                         Spacer()
                         
                         VStack(alignment: .trailing) {
-                            Text("\(progression?.freezesRemaining ?? 8)")
+                            Text("\(profile?.freezesRemaining ?? 8)")
                                 .font(.kaizenSectionHeader)
                                 .foregroundColor(.kaizenWood)
                             Text("Freezes Left")
@@ -51,15 +51,18 @@ struct ContentView: View {
                     .padding(.bottom, UIConstants.Spacing.md)
                     
                     List {
-                        ForEach(items) { item in
-                            NavigationLink(value: item) {
-                                Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+                        ForEach(sessions) { session in
+                            HStack {
+                                Text("\(session.exerciseType.rawValue)")
                                     .font(.kaizenBody)
                                     .foregroundColor(.kaizenWhite)
+                                Spacer()
+                                Text("\(session.repsOrDuration) Reps")
+                                    .font(.kaizenMetadata)
+                                    .foregroundColor(.kaizenGray)
                             }
                             .listRowBackground(Color.kaizenShadow)
                         }
-                        .onDelete(perform: deleteItems)
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
@@ -67,25 +70,17 @@ struct ContentView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                ensureProgressionExists()
-                if let p = progression {
-                    ProgressionManager.shared.processDailyCheck(progression: p, modelContext: modelContext)
-                }
-            }
-            .navigationDestination(for: Item.self) { item in
-                ZStack {
-                    Color.kaizenShadow.ignoresSafeArea()
-                    Text("Selected: \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                        .font(.kaizenSectionHeader)
-                        .foregroundColor(.kaizenWhite)
+                ensureProfileExists()
+                if let p = profile {
+                    ProgressionManager.shared.processDailyCheck(profile: p, modelContext: modelContext)
                 }
             }
             .overlay(alignment: .bottomTrailing) {
                 Button(action: {
                     HapticManager.shared.playWorkoutStart()
-                    addItem()
-                    if let p = progression {
-                        ProgressionManager.shared.completeWorkout(progression: p, modelContext: modelContext)
+                    addMockSession()
+                    if let p = profile {
+                        ProgressionManager.shared.completeWorkout(profile: p, modelContext: modelContext)
                     }
                 }) {
                     Image(systemName: "plus")
@@ -101,27 +96,22 @@ struct ContentView: View {
         }
     }
     
-    private func ensureProgressionExists() {
-        if progressions.isEmpty {
-            let newProgression = UserProgression()
-            modelContext.insert(newProgression)
+    private func ensureProfileExists() {
+        if profiles.isEmpty {
+            let newProfile = UserProfile()
+            let newProgress = SwordProgress()
+            newProfile.progress = newProgress
+            
+            modelContext.insert(newProgress)
+            modelContext.insert(newProfile)
             try? modelContext.save()
         }
     }
 
-    private func addItem() {
+    private func addMockSession() {
         withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-            try? modelContext.save()
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+            let session = ExerciseSession(exerciseType: .pushups, repsOrDuration: 15, targetForThatDay: 20, completed: true)
+            modelContext.insert(session)
             try? modelContext.save()
         }
     }

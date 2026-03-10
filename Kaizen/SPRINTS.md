@@ -15,6 +15,17 @@
 - Verified cleanly compiling build using `xcodebuild`.
 
 ---
+### Issue 4: Core Data Schema (SwiftData)
+**Status:** ✅ Completed
+**Description:** Set up the local, offline-first database using SwiftData. Define the exact data structures for UI, streak logic, and workout system persistence.
+
+**Work Accomplished:**
+- Formally created `UserProfile`, `SwordProgress`, `DailySummary`, and `ExerciseSession` SwiftData models.
+- Hooked `ProgressionManager` to map the gamification loop directly to the new `UserProfile` schema.
+- Added dummy `ExerciseSession` entries to `ContentView` to verify SwiftData `List` binding logic cleanly maps backwards through time based on `date`.
+- Re-verified complete project compilation.
+
+*(Add future issues here as they are assigned)*
 ### Issue 3: Monthly Sword Progression & Freeze Logic
 **Status:** ✅ Completed
 **Description:** Define monthly sword tiers, freeze mechanics, and demotion penalties to enforce consistency.
