@@ -15,7 +15,16 @@
 - Verified cleanly compiling build using `xcodebuild`.
 
 ---
-*(Add future issues here as they are assigned)*
+### Issue 3: Monthly Sword Progression & Freeze Logic
+**Status:** ✅ Completed
+**Description:** Define monthly sword tiers, freeze mechanics, and demotion penalties to enforce consistency.
+
+**Work Accomplished:**
+- Defined `SwordTier` enum (Wooden, Steel, Gold, Shadow).
+- Implemented `UserProgression` SwiftData model for persistence of tier and freeze state.
+- Built `ProgressionManager` to handle daily checks, freeze consumption, and tier advancement/demotion.
+- Integrated progression stats into the `ContentView` UI.
+- Hooked up `HapticManager` for feedback on freeze consumption and tier unlocks.
 
 ### Issue 2: Design System (Minimalist Aesthetic)
 **Status:** ✅ Completed

@@ -10,7 +10,12 @@ import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Query private var progressions: [UserProgression]
     @Query private var items: [Item]
+    
+    private var progression: UserProgression? {
+        progressions.first
+    }
 
     var body: some View {
         NavigationStack {
@@ -20,12 +25,37 @@ struct ContentView: View {
                 VStack(spacing: 0) {
                     KaizenHeader(dayText: Date().formatted(.dateTime.weekday(.abbreviated)))
                     
+                    // Progression Stats Segment
+                    HStack(spacing: UIConstants.Spacing.md) {
+                        VStack(alignment: .leading) {
+                            Text(progression?.currentTier.rawValue ?? "Wooden")
+                                .font(.kaizenSectionHeader)
+                                .foregroundColor(.kaizenSage)
+                            Text("Sword Tier")
+                                .font(.kaizenMetadata)
+                                .foregroundColor(.kaizenGray)
+                        }
+                        
+                        Spacer()
+                        
+                        VStack(alignment: .trailing) {
+                            Text("\(progression?.freezesRemaining ?? 8)")
+                                .font(.kaizenSectionHeader)
+                                .foregroundColor(.kaizenWood)
+                            Text("Freezes Left")
+                                .font(.kaizenMetadata)
+                                .foregroundColor(.kaizenGray)
+                        }
+                    }
+                    .padding(.horizontal, UIConstants.Spacing.md)
+                    .padding(.bottom, UIConstants.Spacing.md)
+                    
                     List {
                         ForEach(items) { item in
                             NavigationLink(value: item) {
                                 Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
                                     .font(.kaizenBody)
-                                    .foregroundColor(.kaizenWood)
+                                    .foregroundColor(.kaizenWhite)
                             }
                             .listRowBackground(Color.kaizenShadow)
                         }
@@ -36,6 +66,12 @@ struct ContentView: View {
                 }
             }
             .navigationBarHidden(true)
+            .onAppear {
+                ensureProgressionExists()
+                if let p = progression {
+                    ProgressionManager.shared.processDailyCheck(progression: p, modelContext: modelContext)
+                }
+            }
             .navigationDestination(for: Item.self) { item in
                 ZStack {
                     Color.kaizenShadow.ignoresSafeArea()
@@ -48,6 +84,9 @@ struct ContentView: View {
                 Button(action: {
                     HapticManager.shared.playWorkoutStart()
                     addItem()
+                    if let p = progression {
+                        ProgressionManager.shared.completeWorkout(progression: p, modelContext: modelContext)
+                    }
                 }) {
                     Image(systemName: "plus")
                         .font(.title2.weight(.bold))
@@ -61,11 +100,20 @@ struct ContentView: View {
             }
         }
     }
+    
+    private func ensureProgressionExists() {
+        if progressions.isEmpty {
+            let newProgression = UserProgression()
+            modelContext.insert(newProgression)
+            try? modelContext.save()
+        }
+    }
 
     private func addItem() {
         withAnimation {
             let newItem = Item(timestamp: Date())
             modelContext.insert(newItem)
+            try? modelContext.save()
         }
     }
 
@@ -74,6 +122,7 @@ struct ContentView: View {
             for index in offsets {
                 modelContext.delete(items[index])
             }
+            try? modelContext.save()
         }
     }
 }
