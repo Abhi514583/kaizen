@@ -24,10 +24,10 @@ struct ContentView: View {
                         ImprovementView()
                     case .settings:
                         SettingsView()
-                    case .workoutSetup(let type):
-                        WorkoutSetupView(path: $navigationPath, exerciseType: type)
                     case .activeWorkout(let type):
-                        WorkoutView(exerciseName: type.rawValue, pr: "45 PR", goal: 50) // Shell uses mock data for now
+                        WorkoutView(path: $navigationPath, exerciseName: type.rawValue, pr: "45 PR", goal: 50)
+                    case .sessionComplete(let type, let count):
+                        SessionCompleteView(path: $navigationPath, exerciseType: type, count: count)
                     }
                 }
         }

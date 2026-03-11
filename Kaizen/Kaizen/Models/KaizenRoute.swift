@@ -7,4 +7,5 @@ enum KaizenRoute: Hashable {
     case settings
     case workoutSetup(ExerciseType)
     case activeWorkout(ExerciseType)
+    case sessionComplete(ExerciseType, Int)
 }

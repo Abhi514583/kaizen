@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct WorkoutView: View {
+    @Binding var path: [KaizenRoute]
     let exerciseName: String
     let pr: String
     let goal: Int
@@ -78,8 +79,11 @@ struct WorkoutView: View {
                     }
                     
                     controlButton(icon: "xmark", isDestructive: true) {
-                        dismiss()
-                        HapticManager.shared.playWorkoutStart()
+                        if let exerciseType = ExerciseType(rawValue: exerciseName) {
+                            path.append(.sessionComplete(exerciseType, currentReps))
+                        } else {
+                            dismiss()
+                        }
                     }
                 }
                 .padding(.bottom, 40)
