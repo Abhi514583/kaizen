@@ -50,6 +50,7 @@ struct CalendarView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedDate: Date? = nil
     @State private var viewMode: ViewMode = .monthly
+    @State private var activeMonth: Date = Date()
     
     enum ViewMode {
         case monthly, yearly
@@ -74,10 +75,28 @@ struct CalendarView: View {
                 // Header
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(viewMode == .monthly ? monthFormatter.string(from: Date()).uppercased() : "2024 LEGACY")
-                            .font(.system(size: 24, weight: .black))
-                            .foregroundColor(.kaizenWhite)
-                            .tracking(2)
+                        HStack(spacing: 12) {
+                            if viewMode == .monthly {
+                                Button(action: { changeMonth(by: -1) }) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.kaizenGray)
+                                }
+                            }
+                            
+                            Text(viewMode == .monthly ? monthFormatter.string(from: activeMonth).uppercased() : "2024 LEGACY")
+                                .font(.system(size: 24, weight: .black))
+                                .foregroundColor(.kaizenWhite)
+                                .tracking(2)
+                            
+                            if viewMode == .monthly {
+                                Button(action: { changeMonth(by: 1) }) {
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundColor(.kaizenGray)
+                                }
+                            }
+                        }
                         
                         Text("CONSISTENCY TRACKER")
                             .font(.system(size: 10, weight: .bold))
@@ -147,7 +166,7 @@ struct CalendarView: View {
                     if let date = date {
                         DayCell(
                             date: date,
-                            isCurrentMonth: true,
+                            isCurrentMonth: calendar.isDate(date, equalTo: activeMonth, toGranularity: .month),
                             isToday: calendar.isDateInToday(date),
                             ritualStatus: getRitualStatus(for: date)
                         ) {
@@ -178,11 +197,19 @@ struct CalendarView: View {
     }
     
     // MARK: - Logic
+    private func changeMonth(by value: Int) {
+        if let newDate = calendar.date(byAdding: .month, value: value, to: activeMonth) {
+            withAnimation(.spring()) {
+                activeMonth = newDate
+            }
+        }
+    }
+
     private func daysInMonth() -> [Date?] {
-        guard let monthInterval = calendar.dateInterval(of: .month, for: Date()),
+        guard let monthInterval = calendar.dateInterval(of: .month, for: activeMonth),
               let firstWeekday = calendar.dateComponents([.weekday], from: monthInterval.start).weekday else { return [] }
         
-        let days = calendar.range(of: .day, in: .month, for: Date())!.count
+        let days = calendar.range(of: .day, in: .month, for: activeMonth)!.count
         var dates: [Date?] = Array(repeating: nil, count: firstWeekday - 1)
         
         for day in 1...days {
@@ -254,9 +281,9 @@ struct DayDetailView: View {
                 
                 // Enhanced Stats List
                 VStack(spacing: 16) {
-                    historyRow(title: "PUSHUPS", value: "45", isMax: true, icon: "figure.pushups")
-                    historyRow(title: "SQUATS", value: "60", isMax: false, icon: "figure.squats")
-                    historyRow(title: "PLANK", value: "1:30", isMax: false, icon: "figure.plank")
+                    historyRow(title: "PUSHUPS", shot: 35, total: 50, goal: 50, icon: "figure.pushups")
+                    historyRow(title: "SQUATS", shot: 40, total: 60, goal: 70, icon: "figure.squats")
+                    historyRow(title: "PLANK", shot: 90, total: 120, goal: 120, icon: "figure.plank", isTime: true)
                 }
                 
                 // Summary Footer
@@ -276,29 +303,48 @@ struct DayDetailView: View {
         }
     }
     
-    private func historyRow(title: String, value: String, isMax: Bool, icon: String) -> some View {
-        HStack(spacing: 15) {
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundColor(isMax ? .kaizenSage : .kaizenGray)
-                .frame(width: 30)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.kaizenWhite)
-                if isMax {
-                    Text("NEW PERSONAL BEST")
-                        .font(.system(size: 8, weight: .black))
+    private func historyRow(title: String, shot: Int, total: Int, goal: Int, icon: String, isTime: Bool = false) -> some View {
+        let isMax = total >= goal
+        
+        return VStack(spacing: 12) {
+            HStack(spacing: 15) {
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(isMax ? .kaizenSage : .kaizenGray)
+                    .frame(width: 30)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(.kaizenWhite)
+                    
+                    if isMax {
+                        Text("GOAL ACHIEVED")
+                            .font(.system(size: 8, weight: .black))
+                            .foregroundColor(.kaizenSage)
+                    }
+                }
+                
+                Spacer()
+                
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(isTime ? formatTime(shot) : "\(shot)")
+                        .font(.system(size: 20, weight: .black, design: .rounded))
                         .foregroundColor(.kaizenSage)
+                    Text("1-SHOT MAX")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(.kaizenGray)
                 }
             }
             
-            Spacer()
+            Divider()
+                .background(Color.kaizenGray.opacity(0.1))
             
-            Text(value)
-                .font(.system(size: 20, weight: .black, design: .rounded))
-                .foregroundColor(isMax ? .kaizenSage : .kaizenWhite)
+            HStack {
+                statMiniLabel(title: "TOTAL VOLUME", value: isTime ? formatTime(total) : "\(total)")
+                Spacer()
+                statMiniLabel(title: "DAILY GOAL", value: isTime ? formatTime(goal) : "\(goal)")
+            }
         }
         .padding(18)
         .background(Color.white.opacity(0.03))
@@ -307,6 +353,23 @@ struct DayDetailView: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(isMax ? Color.kaizenSage.opacity(0.3) : Color.clear, lineWidth: 1)
         )
+    }
+    
+    private func statMiniLabel(title: String, value: String) -> some View {
+        HStack(spacing: 6) {
+            Text(title)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(.kaizenGray)
+            Text(value)
+                .font(.system(size: 10, weight: .black))
+                .foregroundColor(.kaizenWhite)
+        }
+    }
+    
+    private func formatTime(_ seconds: Int) -> String {
+        let m = seconds / 60
+        let s = seconds % 60
+        return String(format: "%d:%02d", m, s)
     }
 }
 
