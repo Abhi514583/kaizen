@@ -33,7 +33,7 @@ class CalendarViewModel: ObservableObject {
         var mockDays: [RitualDay] = []
         let today = calendar.startOfDay(for: Date())
         
-        for i in 0..<60 {
+        for i in 0..<365 {
             if let date = calendar.date(byAdding: .day, value: -i, to: today) {
                 let status: RitualStatus
                 if i == 0 { status = .future }
@@ -67,6 +67,7 @@ class CalendarViewModel: ObservableObject {
 struct CalendarView: View {
     @StateObject private var vm = CalendarViewModel()
     @Environment(\.dismiss) var dismiss
+    let tier: String // "Wooden", "Silver", "Black", etc.
     @State private var viewMode: ViewMode = .monthly
     @State private var selectedDay: RitualDay? = nil
     
@@ -93,9 +94,9 @@ struct CalendarView: View {
                 
                 ScrollView(showsIndicators: false) {
                     if viewMode == .monthly {
-                        MonthlyGridView(vm: vm, selectedDay: $selectedDay)
+                        MonthlyGridView(vm: vm, tier: tier, selectedDay: $selectedDay)
                     } else {
-                        YearlyHeatmapView(vm: vm)
+                        YearlyHeatmapView(vm: vm, tier: tier)
                     }
                     
                     // Legend
@@ -123,10 +124,23 @@ struct CalendarView: View {
                     .tracking(4)
             }
             Spacer()
-            Button(action: { dismiss() }) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundColor(.kaizenGray.opacity(0.3))
+            Button(action: { 
+                HapticManager.shared.playWorkoutStart()
+                dismiss() 
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("BACK")
+                        .font(.system(size: 10, weight: .black))
+                        .tracking(1)
+                }
+                .foregroundColor(.kaizenWhite)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(20)
+                .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
             }
         }
         .padding(.horizontal, 24)
@@ -149,10 +163,16 @@ struct CalendarView: View {
     
     private var legendSection: some View {
         HStack(spacing: 20) {
-            legendItem(title: "SUCCESS", color: .kaizenSage)
+            legendItem(title: "SUCCESS", color: successColor)
             legendItem(title: "FREEZE", color: .red, systemImage: "heart.fill")
             legendItem(title: "MISSED", color: .black)
         }
+    }
+    
+    private var successColor: Color {
+        if tier.lowercased().contains("silver") { return .white }
+        if tier.lowercased().contains("black") { return Color(red: 0.7, green: 0.9, blue: 1.0) } // Diamond
+        return .kaizenSage // Gold/Wooden
     }
     
     private func legendItem(title: String, color: Color, systemImage: String? = nil) -> some View {
@@ -176,6 +196,7 @@ struct CalendarView: View {
 
 struct MonthlyGridView: View {
     @ObservedObject var vm: CalendarViewModel
+    let tier: String
     @Binding var selectedDay: RitualDay?
     private let calendar = Calendar.current
     
@@ -198,7 +219,7 @@ struct MonthlyGridView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 10) {
                 ForEach(daysInMonth(), id: \.self) { date in
                     if let date = date {
-                        DayCell(date: date, status: vm.getStatus(for: date)) {
+                        DayCell(date: date, status: vm.getStatus(for: date), tier: tier) {
                             if let data = vm.getDayData(for: date) {
                                 selectedDay = data
                             }
@@ -208,6 +229,17 @@ struct MonthlyGridView: View {
                     }
                 }
             }
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 30)
+                    .onEnded { value in
+                        if value.translation.width < -50 {
+                            changeMonth(by: 1)
+                        } else if value.translation.width > 50 {
+                            changeMonth(by: -1)
+                        }
+                    }
+            )
         }
         .padding(.horizontal, 24)
     }
@@ -236,6 +268,7 @@ struct MonthlyGridView: View {
 struct DayCell: View {
     let date: Date
     let status: RitualStatus
+    let tier: String
     let action: () -> Void
     
     var body: some View {
@@ -246,7 +279,7 @@ struct DayCell: View {
                     .frame(height: 45)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(status == .success ? Color.kaizenSage.opacity(0.3) : Color.clear, lineWidth: 1)
+                            .stroke(status == .success ? successColor.opacity(0.3) : Color.clear, lineWidth: 1)
                     )
                 
                 VStack(spacing: 2) {
@@ -267,16 +300,23 @@ struct DayCell: View {
     
     private var backgroundColor: Color {
         switch status {
-        case .success: return Color.kaizenSage.opacity(0.8) // Gold-equivalent in our palette
+        case .success: return successColor.opacity(0.8)
         case .freeze: return .red.opacity(0.8)
         case .missed: return .black
         case .future: return Color.kaizenGray.opacity(0.05)
         }
     }
+    
+    private var successColor: Color {
+        if tier.lowercased().contains("silver") { return .white }
+        if tier.lowercased().contains("black") { return Color(red: 0.7, green: 0.9, blue: 1.0) } // Diamond
+        return .kaizenSage // Gold/Wooden
+    }
 }
 
 struct YearlyHeatmapView: View {
     @ObservedObject var vm: CalendarViewModel
+    let tier: String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -285,21 +325,22 @@ struct YearlyHeatmapView: View {
                     VStack(spacing: 2) {
                         ForEach(1...31, id: \.self) { d in
                             if let date = dateFor(month: m + 1, day: d) {
-                                HabitCell(status: vm.getStatus(for: date))
+                                HabitCell(status: vm.getStatus(for: date), tier: tier)
                             } else {
-                                Color.clear.frame(width: 8, height: 8)
+                                Color.clear.frame(width: 4, height: 4)
                             }
                         }
                     }
                 }
             }
         }
+        .padding(.top, 20)
         .padding(.horizontal, 24)
     }
     
     private func dateFor(month: Int, day: Int) -> Date? {
         var comps = DateComponents()
-        comps.year = 2024
+        comps.year = Calendar.current.component(.year, from: Date())
         comps.month = month
         comps.day = day
         return Calendar.current.date(from: comps)
@@ -308,18 +349,25 @@ struct YearlyHeatmapView: View {
 
 struct HabitCell: View {
     let status: RitualStatus
+    let tier: String
     var body: some View {
         RoundedRectangle(cornerRadius: 1.5)
             .fill(color)
-            .frame(width: 10, height: 10)
+            .frame(width: 6, height: 6)
     }
     private var color: Color {
         switch status {
-        case .success: return .kaizenSage
+        case .success: return successColor
         case .freeze: return .red
         case .missed: return .black
         case .future: return Color.white.opacity(0.05)
         }
+    }
+    
+    private var successColor: Color {
+        if tier.lowercased().contains("silver") { return .white }
+        if tier.lowercased().contains("black") { return Color(red: 0.7, green: 0.9, blue: 1.0) } // Diamond
+        return .kaizenSage // Gold/Wooden
     }
 }
 
@@ -408,5 +456,5 @@ struct RitualManifestSheet: View {
 }
 
 #Preview {
-    CalendarView()
+    CalendarView(tier: "Wooden")
 }

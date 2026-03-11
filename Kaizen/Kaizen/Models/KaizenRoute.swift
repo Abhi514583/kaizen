@@ -2,7 +2,7 @@ import Foundation
 
 enum KaizenRoute: Hashable {
     case home
-    case calendar
+    case calendar(String)
     case improvement
     case settings
     case workoutSetup(ExerciseType)

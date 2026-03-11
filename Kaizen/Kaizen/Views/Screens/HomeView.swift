@@ -194,7 +194,7 @@ struct HomeView: View {
             
             Spacer()
             
-            Button(action: { path.append(.calendar) }) {
+            Button(action: { path.append(.calendar(profile?.currentSwordTier.rawValue ?? "Wooden")) }) {
                 Text("Calendar")
                     .font(.kaizenBody)
                     .foregroundColor(.kaizenGray)
@@ -309,7 +309,7 @@ struct HomeView: View {
                 .frame(width: 40, height: 4)
                 .padding(.top, 12)
             
-            CalendarView()
+            CalendarView(tier: profile?.currentSwordTier.rawValue ?? "Wooden")
                 .padding(.top, 20)
             
             Spacer()

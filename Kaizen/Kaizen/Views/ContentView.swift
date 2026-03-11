@@ -18,8 +18,8 @@ struct ContentView: View {
                     switch route {
                     case .home:
                         HomeView(path: $navigationPath)
-                    case .calendar:
-                        CalendarView()
+                    case .calendar(let tier):
+                        CalendarView(tier: tier)
                     case .improvement:
                         ImprovementView()
                     case .settings:
