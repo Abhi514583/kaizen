@@ -91,7 +91,7 @@ struct SessionCompleteView: View {
                         Spacer()
                         
                         // Small Flip Clock
-                        FlipClockHero(digit: 12) // Mock day
+                        FlipClockHero(value: 12) // Mock day
                             .scaleEffect(0.6)
                             .frame(width: 70, height: 50)
                     }
@@ -145,7 +145,7 @@ struct SessionCompleteView: View {
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 showContent = true
-                HapticManager.shared.playSuccess()
+                HapticManager.shared.playSessionComplete()
             }
         }
     }

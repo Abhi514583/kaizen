@@ -130,5 +130,5 @@ struct WorkoutView: View {
 }
 
 #Preview {
-    WorkoutView(exerciseName: "Pushups", pr: "45 PR", goal: 50)
+    WorkoutView(path: .constant([]), exerciseName: "Pushups", pr: "45 PR", goal: 50)
 }
