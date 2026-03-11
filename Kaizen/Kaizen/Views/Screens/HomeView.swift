@@ -252,17 +252,17 @@ struct HomeView: View {
                 // Exercise Options - Staggered "Pop"
                 if isMenuExpanded {
                     VStack(spacing: 16) {
-                        menuItem(title: "Pushups", icon: "figure.pushups", delay: 0.1) {
+                        menuItem(title: "Pushups", pr: "45 PR", icon: "figure.pushups", delay: 0.1) {
                             closeMenu()
                             path.append(.workoutSetup)
                         }
                         
-                        menuItem(title: "Squats", icon: "figure.cross.training", delay: 0.05) {
+                        menuItem(title: "Squats", pr: "80 PR", icon: "figure.cross.training", delay: 0.05) {
                             closeMenu()
                             path.append(.workoutSetup)
                         }
                         
-                        menuItem(title: "Plank", icon: "figure.strengthtraining.functional", delay: 0.0) {
+                        menuItem(title: "Plank", pr: "2:00 PR", icon: "figure.strengthtraining.functional", delay: 0.0) {
                             closeMenu()
                             path.append(.workoutSetup)
                         }
@@ -278,42 +278,45 @@ struct HomeView: View {
                         Circle()
                             .fill(Color.kaizenWhite)
                             .frame(width: 70, height: 70)
-                            .shadow(color: Color.kaizenSage.opacity(0.3), radius: 15, x: 0, y: 5)
                         
                         Image(systemName: "plus")
                             .font(.system(size: 30, weight: .bold))
                             .foregroundColor(.kaizenShadow)
                             .rotationEffect(.degrees(45))
                     }
+                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
                 }
                 .padding(.bottom, 25)
             }
         }
     }
     
-    private func menuItem(title: String, icon: String, delay: Double, action: @escaping () -> Void) -> some View {
+    private func menuItem(title: String, pr: String, icon: String, delay: Double, action: @escaping () -> Void) -> some View {
         Button(action: {
             HapticManager.shared.playSessionComplete()
             action()
         }) {
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
+                    .frame(width: 24)
                 
-                Text(title.uppercased())
-                    .font(.system(size: 14, weight: .bold))
-                    .tracking(2)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title.uppercased())
+                        .font(.system(size: 14, weight: .bold))
+                        .tracking(2)
+                    
+                    Text(pr)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Color.kaizenSage)
+                }
             }
             .foregroundColor(.kaizenWhite)
-            .padding(.vertical, 14)
+            .padding(.vertical, 12)
             .padding(.horizontal, 24)
             .background(
                 Capsule()
-                    .fill(Color.kaizenShadow.opacity(0.8))
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.kaizenGray.opacity(0.2), lineWidth: 1)
-                    )
+                    .fill(Color.kaizenShadow.opacity(0.9))
             )
         }
         .scaleEffect(isMenuExpanded ? 1.0 : 0.8)
