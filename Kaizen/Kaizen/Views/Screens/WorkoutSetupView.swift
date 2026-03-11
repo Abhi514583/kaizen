@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WorkoutSetupView: View {
     @Binding var path: [KaizenRoute]
+    let exerciseType: ExerciseType
     
     var body: some View {
         ZStack {
@@ -10,13 +11,13 @@ struct WorkoutSetupView: View {
                 Text("Begin Ritual")
                     .font(.kaizenLargeHeader)
                     .foregroundColor(.kaizenWhite)
-                Text("Select your focus for today.")
+                Text("Focus: \(exerciseType.rawValue)")
                     .font(.kaizenBody)
-                    .foregroundColor(.kaizenGray)
+                    .foregroundColor(.kaizenSage)
                 
                 Button(action: {
                     HapticManager.shared.playWorkoutStart()
-                    path.append(.activeWorkout)
+                    path.append(.activeWorkout(exerciseType))
                 }) {
                     Text("Start")
                         .font(.kaizenSectionHeader)

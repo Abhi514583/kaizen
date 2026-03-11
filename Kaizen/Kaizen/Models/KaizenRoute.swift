@@ -5,6 +5,6 @@ enum KaizenRoute: Hashable {
     case calendar
     case improvement
     case settings
-    case workoutSetup
-    case activeWorkout
+    case workoutSetup(ExerciseType)
+    case activeWorkout(ExerciseType)
 }

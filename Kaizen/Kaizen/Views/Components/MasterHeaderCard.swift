@@ -73,9 +73,7 @@ struct MasterHeaderCard: View {
         MasterHeaderCard(
             tier: "Wooden",
             aura: "Muted",
-            weekday: "Tuesday",
-            onSettingsTap: {},
-            onWeekdayTap: {}
+            onSettingsTap: {}
         )
     }
 }

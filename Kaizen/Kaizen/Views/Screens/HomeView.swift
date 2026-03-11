@@ -253,17 +253,17 @@ struct HomeView: View {
                     VStack(spacing: 16) {
                         menuItem(title: "Pushups", pr: "45 PR", icon: "figure.pushups", delay: 0.1) {
                             closeMenu()
-                            path.append(.workoutSetup)
+                            path.append(.workoutSetup(.pushups))
                         }
                         
                         menuItem(title: "Squats", pr: "80 PR", icon: "figure.cross.training", delay: 0.05) {
                             closeMenu()
-                            path.append(.workoutSetup)
+                            path.append(.workoutSetup(.squats))
                         }
                         
                         menuItem(title: "Plank", pr: "2:00 PR", icon: "figure.strengthtraining.functional", delay: 0.0) {
                             closeMenu()
-                            path.append(.workoutSetup)
+                            path.append(.workoutSetup(.plank))
                         }
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))

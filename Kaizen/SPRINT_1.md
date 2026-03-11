@@ -57,12 +57,13 @@
 
 ---
 
-## Issue 6: Zen Rain Atmosphere
+## Issue 6: Workout Screen Shell
 **Status:** ✅ Completed
-**Description:** Implement a calm, animated weather layer with particle physics and anime-style splashes.
+**Description:** Build the immersive visual shell for workout sessions with camera placeholders and rep counters.
 
 **Work Accomplished:**
-- Built `RainAtmosphere` component using `TimelineView` and `Canvas`.
-- Implemented randomized raindrop particles with gravity and wind.
-- Added anime-style splash sparks at the bottom of the viewport.
-- Integrated as a background atmospheric layer in `HomeView`.
+- Created `WorkoutView` with a full-screen, high-contrast camera placeholder backdrop.
+- Implemented a giant, glowing central rep counter for high-impact feedback.
+- Developed a Training HUD overlay showing Exercise Name, PR, Goal, and Session Time.
+- Integrated `ExerciseType` into the `NavigationStack` to support per-exercise dynamic UI.
+- Added native material blur controls for Pause and End Session actions.
