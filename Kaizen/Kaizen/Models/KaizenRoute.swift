@@ -1,0 +1,10 @@
+import Foundation
+
+enum KaizenRoute: Hashable {
+    case home
+    case calendar
+    case improvement
+    case settings
+    case workoutSetup
+    case activeWorkout
+}

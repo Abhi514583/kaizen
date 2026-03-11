@@ -37,6 +37,20 @@
 - Injected `NSCameraUsageDescription` into the `project.pbxproj` file to satisfy iOS privacy requirements.
 
 *(Add future issues here as they are assigned)*
+
+## Sprint 1: Front-End Foundation (UI Mocks & Navigation)
+*Objective: Build out the entire UI shell of Kaizen with fluid navigation between major screens fed by mock data.*
+
+### Issue 1: Root Navigation Shell (Refined Interactivity)
+**Status:** ✅ Completed
+**Description:** Refine the dashboard with a central KAIZEN brand, a red-accented streak indicator, and 8 individually interactive/draggable red hearts. The weekday label on the right will trigger the calendar panel.
+
+**Work Accomplished:**
+- Centered the "KAIZEN" brand at the top of the HomeView.
+- Implemented the streak counter on the left with a Red Dot indicator.
+- Created 8 individually interactive/draggable red hearts for the freeze row.
+- Made the weekday label on the right clickable to open the Calendar history panel.
+- Verified build and navigation functionality.
 ### Issue 3: Monthly Sword Progression & Freeze Logic
 **Status:** ✅ Completed
 **Description:** Define monthly sword tiers, freeze mechanics, and demotion penalties to enforce consistency.
