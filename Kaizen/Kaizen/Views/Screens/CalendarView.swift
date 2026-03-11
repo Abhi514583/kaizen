@@ -79,9 +79,13 @@ struct CalendarView: View {
         ZStack {
             Color.kaizenShadow.ignoresSafeArea()
             
-            VStack(spacing: 20) {
-                // Header
+            VStack(spacing: 0) {
+                KaizenHeader(isHome: false, onBack: { dismiss() })
+                    .padding(.top, 10)
+                
+                // Header (Title)
                 headerSection
+                    .padding(.top, 10)
                 
                 // Toggle
                 HStack(spacing: 0) {

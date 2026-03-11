@@ -9,23 +9,8 @@ struct ImprovementView: View {
             Color.kaizenShadow.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Custom Top Navigation
-                HStack {
-                    Button(action: {
-                        HapticManager.shared.playWorkoutStart()
-                        dismiss()
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
-                            .foregroundColor(.kaizenGray)
-                            .frame(width: 44, height: 44)
-                            .contentShape(Rectangle())
-                    }
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
+                KaizenHeader(isHome: false, onBack: { dismiss() })
+                    .padding(.top, 10)
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 32) {
@@ -42,6 +27,8 @@ struct ImprovementView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 8)
+
+                        // Consistency Summary (Hero Layout)
 
                         // Consistency Summary (Hero Layout)
                         summaryModule

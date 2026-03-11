@@ -10,6 +10,7 @@ struct HomeView: View {
     
     @State private var isMenuExpanded = false
     @State private var auraOffset = CGSize.zero
+    @State private var heartOffsets: [CGSize] = Array(repeating: .zero, count: 8)
     
     private var profile: UserProfile? {
         profiles.first
@@ -35,7 +36,8 @@ struct HomeView: View {
             
             VStack(spacing: 0) {
                 // MARK: - Master Identity Header
-                MasterHeaderCard(
+                KaizenHeader(
+                    isHome: true,
                     tier: "Wooden",
                     aura: "Muted",
                     onSettingsTap: { path.append(.settings) }
@@ -58,11 +60,15 @@ struct HomeView: View {
                                 .frame(width: 10, height: 10)
                                 .padding(.bottom, 12)
                         }
+                        
+                        freezeRow
+                            .padding(.top, 8)
+                            .padding(.leading, -16) // Reset alignment relative to the VStack
                     }
                     Spacer()
                 }
                 .padding(.horizontal, UIConstants.Spacing.lg)
-                .padding(.top, 20)
+                .padding(.top, 24)
                 
                 Spacer()
                 
@@ -80,6 +86,30 @@ struct HomeView: View {
         }
         .onAppear {
             ensureProfileExists()
+        }
+    }
+    
+    // MARK: - Freeze Row
+    private var freezeRow: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<8) { index in
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 12))
+                    .foregroundColor(.red)
+                    .offset(heartOffsets[index])
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                heartOffsets[index] = value.translation
+                            }
+                            .onEnded { _ in
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                                    heartOffsets[index] = .zero
+                                }
+                            }
+                    )
+            }
+            Spacer()
         }
     }
     
