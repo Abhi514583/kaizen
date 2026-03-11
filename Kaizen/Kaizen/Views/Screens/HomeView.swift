@@ -31,6 +31,10 @@ struct HomeView: View {
         ZStack {
             Color.kaizenShadow.ignoresSafeArea()
             
+            // MARK: - Atmospheric Layer
+            RainAtmosphere()
+                .ignoresSafeArea()
+            
             VStack(spacing: 0) {
                 // MARK: - Master Identity Header
                 MasterHeaderCard(
