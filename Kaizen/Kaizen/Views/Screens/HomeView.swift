@@ -10,7 +10,6 @@ struct HomeView: View {
     
     @State private var isMenuExpanded = false
     @State private var auraOffset = CGSize.zero
-    @State private var showCalendarPanel = false
     
     private var profile: UserProfile? {
         profiles.first
@@ -75,24 +74,6 @@ struct HomeView: View {
                 // MARK: - Bottom Navigation
                 bottomNavBar
             }
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 30, coordinateSpace: .local)
-                    .onEnded { value in
-                        if value.translation.height > 100 {
-                            withAnimation(.spring()) {
-                                showCalendarPanel = true
-                            }
-                        }
-                    }
-            )
-            
-            // MARK: - Calendar Panel Overlay
-            if showCalendarPanel {
-                calendarPanelOverlay
-            }
-            
-            // MARK: - Expanding Menu Overlay
             if isMenuExpanded {
                 menuOverlay
             }
@@ -299,38 +280,6 @@ struct HomeView: View {
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             isMenuExpanded = false
         }
-    }
-    
-    // MARK: - Calendar Panel Overlay
-    private var calendarPanelOverlay: some View {
-        VStack(spacing: 0) {
-            Capsule()
-                .fill(Color.kaizenGray.opacity(0.3))
-                .frame(width: 40, height: 4)
-                .padding(.top, 12)
-            
-            CalendarView(tier: profile?.currentSwordTier.rawValue ?? "Wooden")
-                .padding(.top, 20)
-            
-            Spacer()
-            
-            Button(action: {
-                withAnimation(.spring()) {
-                    showCalendarPanel = false
-                }
-            }) {
-                Text("Close")
-                    .font(.kaizenBody)
-                    .foregroundColor(.kaizenGray)
-                    .padding(.bottom, 30)
-            }
-        }
-        .background(Color.kaizenShadow)
-        .cornerRadius(32, corners: [.topLeft, .topRight])
-        .shadow(color: .black.opacity(0.3), radius: 20)
-        .padding(.top, 100)
-        .transition(.move(edge: .bottom))
-        .zIndex(10)
     }
     
     private func ensureProfileExists() {
