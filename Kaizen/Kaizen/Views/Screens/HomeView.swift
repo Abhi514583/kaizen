@@ -7,6 +7,9 @@ import SwiftData
 import SwiftUI
 import SwiftData
 
+import SwiftUI
+import SwiftData
+
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
@@ -26,6 +29,12 @@ struct HomeView: View {
     // Mock data for Sprint 1
     private let mockStreak = 10
     private let weekday = Date().formatted(.dateTime.weekday(.wide))
+    
+    private let mockTargets = [
+        ExerciseTarget(name: "Pushups", current: 30, goal: 30, color: .kaizenSage),
+        ExerciseTarget(name: "Squats", current: 20, goal: 50, color: .kaizenWood),
+        ExerciseTarget(name: "Plank", current: 45, goal: 60, color: .kaizenGray)
+    ]
 
     var body: some View {
         ZStack {
@@ -33,12 +42,7 @@ struct HomeView: View {
             
             VStack(spacing: 0) {
                 // MARK: - App Branding
-                Text("KAIZEN")
-                    .font(.kaizenSectionHeader)
-                    .fontWeight(.bold)
-                    .foregroundColor(.kaizenWhite)
-                    .tracking(4)
-                    .padding(.top, 20)
+                brandingSection
                 
                 // MARK: - Header Section
                 headerSection
@@ -48,8 +52,13 @@ struct HomeView: View {
                 
                 Spacer()
                 
-                // MARK: - Floating Aura Element
-                auraElement
+                // MARK: - Hero Aura Section
+                heroSection
+                
+                Spacer()
+                
+                // MARK: - Today's Ritual Targets
+                targetsSection
                 
                 Spacer()
                 
@@ -83,38 +92,62 @@ struct HomeView: View {
         }
     }
     
+    // MARK: - Branding Section
+    private var brandingSection: some View {
+        Text("KAIZEN")
+            .font(.kaizenSectionHeader)
+            .fontWeight(.bold)
+            .foregroundColor(.kaizenWhite)
+            .tracking(4)
+            .padding(.top, 20)
+    }
+    
     // MARK: - Header Section
     private var headerSection: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            // Streak count on the left
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("\(mockStreak)")
-                    .font(.system(size: 80, weight: .bold, design: .rounded))
-                    .foregroundColor(.kaizenWhite)
+        HStack(alignment: .bottom) {
+            // Streak count on the left with contextual label
+            VStack(alignment: .leading, spacing: 4) {
+                Text("DAY")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.kaizenGray)
+                    .tracking(2)
                 
-                Circle()
-                    .fill(Color.red)
-                    .frame(width: 14, height: 14)
-                    .offset(y: -10)
+                HStack(alignment: .bottom, spacing: 12) {
+                    FlipClockHero(value: mockStreak)
+                    
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 14, height: 14)
+                        .padding(.bottom, 15)
+                }
             }
             
             Spacer()
             
-            // Weekday on the right - Clickable to open Calendar
-            Button(action: {
-                withAnimation(.spring()) {
-                    showCalendarPanel = true
+            VStack(alignment: .trailing, spacing: 12) {
+                // Settings Button
+                Button(action: { path.append(.settings) }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(.kaizenGray)
                 }
-            }) {
-                Text(weekday)
-                    .font(.kaizenBody)
-                    .foregroundColor(.kaizenGray)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
-                    .background(Color.kaizenShadow)
-                    .cornerRadius(8)
+                
+                // Weekday Label - Clickable for Calendar
+                Button(action: {
+                    withAnimation(.spring()) {
+                        showCalendarPanel = true
+                    }
+                }) {
+                    Text(weekday)
+                        .font(.kaizenBody)
+                        .foregroundColor(.kaizenGray)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color.kaizenShadow.opacity(0.5))
+                        .cornerRadius(8)
+                }
             }
-            .offset(y: -15)
+            .padding(.bottom, 5)
         }
         .padding(.horizontal, UIConstants.Spacing.lg)
         .padding(.top, 10)
@@ -143,19 +176,29 @@ struct HomeView: View {
             Spacer()
         }
         .padding(.horizontal, UIConstants.Spacing.lg)
-        .padding(.top, 4)
+        .padding(.top, 15)
     }
     
-    // MARK: - Aura Element
+    // MARK: - Hero Section
+    private var heroSection: some View {
+        VStack(spacing: 16) {
+            auraElement
+            
+            Text("SWORD ENERGY")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(.kaizenSage)
+                .tracking(2)
+                .opacity(0.8)
+        }
+    }
+    
     private var auraElement: some View {
         ZStack {
-            // Subtle glow
             Circle()
                 .fill(Color.kaizenSage.opacity(0.15))
                 .frame(width: 120, height: 120)
                 .blur(radius: 20)
             
-            // The Orb
             Circle()
                 .fill(
                     RadialGradient(
@@ -180,6 +223,60 @@ struct HomeView: View {
                     }
                 }
         )
+    }
+    
+    // MARK: - Targets Section
+    private var targetsSection: some View {
+        HStack(spacing: 12) {
+            ForEach(mockTargets) { target in
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(target.name.uppercased())
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.kaizenGray)
+                        .tracking(1)
+                    
+                    if target.current >= target.goal {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(target.color)
+                            Text("DONE")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(.kaizenWhite)
+                        }
+                    } else {
+                        HStack(alignment: .firstTextBaseline, spacing: 2) {
+                            Text("\(target.current)")
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.kaizenWhite)
+                            Text("/\(target.goal)")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(.kaizenGray)
+                        }
+                    }
+                    
+                    // Simple progress bar
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.kaizenGray.opacity(0.2))
+                            Capsule()
+                                .fill(target.color)
+                                .frame(width: geo.size.width * min(1.0, CGFloat(target.current) / CGFloat(target.goal)))
+                        }
+                    }
+                    .frame(height: 4)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, minHeight: 80)
+                .background(Color.kaizenShadow.opacity(0.4))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.kaizenGray.opacity(0.1), lineWidth: 1)
+                )
+            }
+        }
+        .padding(.horizontal, UIConstants.Spacing.lg)
     }
     
     // MARK: - Bottom Nav Bar
@@ -303,6 +400,15 @@ struct HomeView: View {
             try? modelContext.save()
         }
     }
+}
+
+// Supporting Models for Preview/Mock
+struct ExerciseTarget: Identifiable {
+    let id = UUID()
+    let name: String
+    let current: Int
+    let goal: Int
+    let color: Color
 }
 
 // Helper for rounded corners on specific sides
