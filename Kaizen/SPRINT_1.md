@@ -57,6 +57,19 @@
 
 ---
 
+## Issue 8: Calendar History Screen
+**Status:** ✅ Completed
+**Description:** Build the monthly training history tracker with ritual indicators and session detail summaries.
+
+**Work Accomplished:**
+- Created `CalendarView` with a premium monthly grid layout.
+- Implemented visual indicators for "Workout" (Sage Green) and "Rest" (Gray) days.
+- Developed the `DayDetailView` sheet for reviewing historical session stats.
+- Integrated mock history data patterns to demonstrate consistency tracking.
+- Connected the navigation flow from the dashboard's "Calendar" toggle.
+
+---
+
 ## Issue 7: Session Complete Screen
 **Status:** ✅ Completed
 **Description:** Build the celebratory post-workout summary screen with shareable results, streak tracking, and sword integration.
