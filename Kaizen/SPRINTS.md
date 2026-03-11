@@ -36,7 +36,15 @@
 - Established `TrackingState.swift` to handle UI feedback strings across error scenarios (low lighting, out of frame).
 - Injected `NSCameraUsageDescription` into the `project.pbxproj` file to satisfy iOS privacy requirements.
 
-*(Add future issues here as they are assigned)*
+### Issue 4: Sword Hero Card
+**Status:** ✅ Completed
+**Description:** Build the main sword display card and integrate it into the home screen layout.
+
+**Work Accomplished:**
+- Created the reusable `SwordHeroCard` component with tier and aura labels.
+- Repositioned the hero element to the top area (below branding) to clean up the middle layout.
+- Removed deprecated central aura elements.
+- Verified build and aesthetic alignment.
 
 ## Sprint 1: Front-End Foundation (UI Mocks & Navigation)
 *Objective: Build out the entire UI shell of Kaizen with fluid navigation between major screens fed by mock data.*

@@ -41,19 +41,44 @@ struct HomeView: View {
             Color.kaizenShadow.ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // MARK: - App Branding
-                brandingSection
+                // MARK: - Master Identity Header
+                MasterHeaderCard(
+                    tier: "Wooden",
+                    aura: "Muted",
+                    weekday: weekday,
+                    onSettingsTap: { path.append(.settings) },
+                    onWeekdayTap: {
+                        withAnimation(.spring()) {
+                            showCalendarPanel = true
+                        }
+                    }
+                )
+                .padding(.top, 10)
                 
-                // MARK: - Header Section
-                headerSection
+                // MARK: - Streak Section
+                HStack(alignment: .bottom) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("DAY")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.kaizenGray)
+                            .tracking(1)
+                        
+                        HStack(alignment: .bottom, spacing: 10) {
+                            FlipClockHero(value: mockStreak)
+                            
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 10, height: 10)
+                                .padding(.bottom, 12)
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, UIConstants.Spacing.lg)
+                .padding(.top, 20)
                 
                 // MARK: - Freeze Row
                 freezeRow
-                
-                Spacer()
-                
-                // MARK: - Hero Aura Section
-                heroSection
                 
                 Spacer()
                 
@@ -92,67 +117,6 @@ struct HomeView: View {
         }
     }
     
-    // MARK: - Branding Section
-    private var brandingSection: some View {
-        Text("KAIZEN")
-            .font(.kaizenSectionHeader)
-            .fontWeight(.bold)
-            .foregroundColor(.kaizenWhite)
-            .tracking(4)
-            .padding(.top, 20)
-    }
-    
-    // MARK: - Header Section
-    private var headerSection: some View {
-        HStack(alignment: .bottom) {
-            // Streak count on the left with contextual label
-            VStack(alignment: .leading, spacing: 4) {
-                Text("DAY")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.kaizenGray)
-                    .tracking(2)
-                
-                HStack(alignment: .bottom, spacing: 12) {
-                    FlipClockHero(value: mockStreak)
-                    
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 14, height: 14)
-                        .padding(.bottom, 15)
-                }
-            }
-            
-            Spacer()
-            
-            VStack(alignment: .trailing, spacing: 12) {
-                // Settings Button
-                Button(action: { path.append(.settings) }) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(.kaizenGray)
-                }
-                
-                // Weekday Label - Clickable for Calendar
-                Button(action: {
-                    withAnimation(.spring()) {
-                        showCalendarPanel = true
-                    }
-                }) {
-                    Text(weekday)
-                        .font(.kaizenBody)
-                        .foregroundColor(.kaizenGray)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
-                        .background(Color.kaizenShadow.opacity(0.5))
-                        .cornerRadius(8)
-                }
-            }
-            .padding(.bottom, 5)
-        }
-        .padding(.horizontal, UIConstants.Spacing.lg)
-        .padding(.top, 10)
-    }
-    
     // MARK: - Freeze Row
     private var freezeRow: some View {
         HStack(spacing: 8) {
@@ -176,54 +140,11 @@ struct HomeView: View {
             Spacer()
         }
         .padding(.horizontal, UIConstants.Spacing.lg)
-        .padding(.top, 15)
+        .padding(.top, 12)
     }
     
-    // MARK: - Hero Section
-    private var heroSection: some View {
-        VStack(spacing: 16) {
-            auraElement
-            
-            Text("SWORD ENERGY")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.kaizenSage)
-                .tracking(2)
-                .opacity(0.8)
-        }
-    }
-    
-    private var auraElement: some View {
-        ZStack {
-            Circle()
-                .fill(Color.kaizenSage.opacity(0.15))
-                .frame(width: 120, height: 120)
-                .blur(radius: 20)
-            
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [.kaizenSage, .kaizenSage.opacity(0.6)],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 40
-                    )
-                )
-                .frame(width: 80, height: 80)
-                .shadow(color: .kaizenSage.opacity(0.3), radius: 15)
-        }
-        .offset(auraOffset)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    auraOffset = value.translation
-                }
-                .onEnded { _ in
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                        auraOffset = .zero
-                    }
-                }
-        )
-    }
+    // MARK: - Aura Element (Deprecated/Moved to SwordHeroCard)
+    // Removing old heroSection and auraElement entirely as requested to clean the middle.
     
     // MARK: - Targets Section
     private var targetsSection: some View {

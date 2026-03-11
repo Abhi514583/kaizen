@@ -18,10 +18,10 @@ struct FlipClockHero: View {
     private func digitCard(for digit: Int) -> some View {
         ZStack {
             // Background card
-            RoundedRectangle(cornerRadius: 8)
+            RoundedRectangle(cornerRadius: 6)
                 .fill(Color.kaizenShadow.opacity(0.6))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 6)
                         .stroke(Color.kaizenGray.opacity(0.1), lineWidth: 1)
                 )
             
@@ -32,9 +32,9 @@ struct FlipClockHero: View {
             
             // The digit
             Text("\(digit)")
-                .font(.system(size: 80, weight: .bold, design: .rounded))
+                .font(.system(size: 60, weight: .bold, design: .rounded))
                 .foregroundColor(.kaizenWhite)
         }
-        .frame(width: 70, height: 100)
+        .frame(width: 50, height: 75)
     }
 }
