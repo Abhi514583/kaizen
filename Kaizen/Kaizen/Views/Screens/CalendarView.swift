@@ -102,7 +102,34 @@ struct CalendarView: View {
                     // Legend
                     legendSection
                         .padding(.top, 20)
+                        .padding(.bottom, 100) // Space for bottom button
                 }
+            }
+            
+            // Bottom Back Button (One-Handed Ergonomics)
+            VStack {
+                Spacer()
+                Button(action: { 
+                    HapticManager.shared.playWorkoutStart()
+                    dismiss() 
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("BACK")
+                            .font(.system(size: 12, weight: .black))
+                            .tracking(2)
+                    }
+                    .foregroundColor(.kaizenWhite)
+                    .frame(height: 50)
+                    .padding(.horizontal, 30)
+                    .background(Color.kaizenShadow.opacity(0.8))
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(25)
+                    .overlay(RoundedRectangle(cornerRadius: 25).stroke(Color.kaizenGray.opacity(0.2), lineWidth: 1))
+                    .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
+                }
+                .padding(.bottom, 30)
             }
         }
         .sheet(item: $selectedDay) { ritualDay in
@@ -124,24 +151,6 @@ struct CalendarView: View {
                     .tracking(4)
             }
             Spacer()
-            Button(action: { 
-                HapticManager.shared.playWorkoutStart()
-                dismiss() 
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 14, weight: .bold))
-                    Text("BACK")
-                        .font(.system(size: 10, weight: .black))
-                        .tracking(1)
-                }
-                .foregroundColor(.kaizenWhite)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(Color.white.opacity(0.05))
-                .cornerRadius(20)
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.1), lineWidth: 1))
-            }
         }
         .padding(.horizontal, 24)
         .padding(.top, 20)
@@ -246,6 +255,7 @@ struct MonthlyGridView: View {
     
     private func changeMonth(by value: Int) {
         if let newDate = calendar.date(byAdding: .month, value: value, to: vm.activeMonth) {
+            HapticManager.shared.playWorkoutStart()
             withAnimation { vm.activeMonth = newDate }
         }
     }
@@ -319,23 +329,35 @@ struct YearlyHeatmapView: View {
     let tier: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 2) {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(alignment: .top, spacing: 12) {
                 ForEach(0..<12) { m in
-                    VStack(spacing: 2) {
-                        ForEach(1...31, id: \.self) { d in
-                            if let date = dateFor(month: m + 1, day: d) {
-                                HabitCell(status: vm.getStatus(for: date), tier: tier)
-                            } else {
-                                Color.clear.frame(width: 4, height: 4)
+                    VStack(alignment: .center, spacing: 6) {
+                        Text(monthName(m))
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(.kaizenGray)
+                            .tracking(1)
+                        
+                        VStack(spacing: 3) {
+                            ForEach(1...31, id: \.self) { d in
+                                if let date = dateFor(month: m + 1, day: d) {
+                                    HabitCell(status: vm.getStatus(for: date), tier: tier)
+                                } else {
+                                    Color.clear.frame(width: 10, height: 10)
+                                }
                             }
                         }
                     }
                 }
             }
+            .padding(.horizontal, 24)
         }
-        .padding(.top, 20)
-        .padding(.horizontal, 24)
+        .padding(.top, 10)
+    }
+    
+    private func monthName(_ m: Int) -> String {
+        let fmt = DateFormatter()
+        return fmt.shortMonthSymbols[m].uppercased()
     }
     
     private func dateFor(month: Int, day: Int) -> Date? {
@@ -351,9 +373,9 @@ struct HabitCell: View {
     let status: RitualStatus
     let tier: String
     var body: some View {
-        RoundedRectangle(cornerRadius: 1.5)
+        RoundedRectangle(cornerRadius: 2)
             .fill(color)
-            .frame(width: 6, height: 6)
+            .frame(width: 10, height: 10)
     }
     private var color: Color {
         switch status {
