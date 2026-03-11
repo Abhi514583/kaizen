@@ -8,58 +8,83 @@ struct ImprovementView: View {
         ZStack {
             Color.kaizenShadow.ignoresSafeArea()
             
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 32) {
-                    // Header Subtitle
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("1% BETTER EVERY DAY")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.kaizenGray.opacity(0.6))
-                            .tracking(2)
+            VStack(spacing: 0) {
+                // Custom Top Navigation
+                HStack {
+                    Button(action: {
+                        HapticManager.shared.playWorkoutStart()
+                        dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .foregroundColor(.kaizenGray)
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 16)
-
-                    // Consistency Summary (Hero Layout)
-                    summaryModule
                     
-                    // Exercise Performance Cards
-                    VStack(spacing: 24) {
-                        ProgressCard(
-                            title: "Push-ups",
-                            baseline: 12,
-                            current: 35,
-                            trend: [0.2, 0.35, 0.3, 0.5, 0.6, 0.85, 1.0],
-                            icon: "figure.pushups",
-                            animate: appearanceFactor
-                        )
-                        
-                        ProgressCard(
-                            title: "Squats",
-                            baseline: 20,
-                            current: 45,
-                            trend: [0.1, 0.25, 0.4, 0.35, 0.55, 0.7, 0.9],
-                            icon: "figure.cross.training",
-                            animate: appearanceFactor
-                        )
-                        
-                        ProgressCard(
-                            title: "Plank",
-                            baseline: 45,
-                            current: 120,
-                            trend: [0.3, 0.4, 0.35, 0.6, 0.5, 0.8, 1.0],
-                            icon: "figure.strengthtraining.functional",
-                            isTime: true,
-                            animate: appearanceFactor
-                        )
-                    }
+                    Spacer()
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 40)
+                .padding(.horizontal, 12)
+                .padding(.top, 8)
+                
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 32) {
+                        // Title Header
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Progress")
+                                .font(.system(size: 34, weight: .black, design: .rounded))
+                                .foregroundColor(.white)
+                            
+                            Text("1% BETTER EVERY DAY")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.kaizenGray.opacity(0.6))
+                                .tracking(2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 8)
+
+                        // Consistency Summary (Hero Layout)
+                        summaryModule
+                        
+                        // Exercise Performance Cards
+                        VStack(spacing: 24) {
+                            ProgressCard(
+                                title: "Push-ups",
+                                baseline: 12,
+                                current: 35,
+                                trend: [0.2, 0.35, 0.3, 0.5, 0.6, 0.85, 1.0],
+                                icon: "figure.pushups",
+                                animate: appearanceFactor
+                            )
+                            
+                            ProgressCard(
+                                title: "Squats",
+                                baseline: 20,
+                                current: 45,
+                                trend: [0.1, 0.25, 0.4, 0.35, 0.55, 0.7, 0.9],
+                                icon: "figure.cross.training",
+                                animate: appearanceFactor
+                            )
+                            
+                            ProgressCard(
+                                title: "Plank",
+                                baseline: 45,
+                                current: 120,
+                                trend: [0.3, 0.4, 0.35, 0.6, 0.5, 0.8, 1.0],
+                                icon: "figure.strengthtraining.functional",
+                                isTime: true,
+                                animate: appearanceFactor
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 40)
+                }
             }
         }
-        .navigationTitle("Progress")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .background(SwipeBackFix()) // Fix for swipe-to-go-back when nav bar hidden
         .onAppear {
             withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
                 appearanceFactor = 1.0
@@ -93,6 +118,19 @@ struct ImprovementView: View {
                 .tracking(1)
         }
     }
+}
+
+// UIKit hack to restore swipe-to-go-back when navigationBarHidden is true
+struct SwipeBackFix: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        let vc = UIViewController()
+        DispatchQueue.main.async {
+            vc.navigationController?.interactivePopGestureRecognizer?.delegate = nil
+            vc.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+        }
+        return vc
+    }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }
 
 struct ProgressCard: View {
