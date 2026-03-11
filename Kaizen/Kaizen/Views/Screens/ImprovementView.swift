@@ -90,6 +90,10 @@ struct ImprovementView: View {
                 appearanceFactor = 1.0
             }
         }
+        .onSwipeBack {
+            HapticManager.shared.playWorkoutStart()
+            dismiss()
+        }
     }
     
     private var summaryModule: some View {
@@ -118,19 +122,6 @@ struct ImprovementView: View {
                 .tracking(1)
         }
     }
-}
-
-// UIKit hack to restore swipe-to-go-back when navigationBarHidden is true
-struct SwipeBackFix: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        let vc = UIViewController()
-        DispatchQueue.main.async {
-            vc.navigationController?.interactivePopGestureRecognizer?.delegate = nil
-            vc.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
-        }
-        return vc
-    }
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }
 
 struct ProgressCard: View {

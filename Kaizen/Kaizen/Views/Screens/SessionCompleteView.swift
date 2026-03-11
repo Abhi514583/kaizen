@@ -142,6 +142,10 @@ struct SessionCompleteView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .background(SwipeBackFix())
+        .onSwipeBack {
+            path = [] // Back to home
+        }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 showContent = true
