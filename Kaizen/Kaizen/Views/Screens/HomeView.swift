@@ -1,15 +1,6 @@
 import SwiftUI
 import SwiftData
 
-import SwiftUI
-import SwiftData
-
-import SwiftUI
-import SwiftData
-
-import SwiftUI
-import SwiftData
-
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var profiles: [UserProfile]
@@ -244,37 +235,97 @@ struct HomeView: View {
         .padding(.bottom, UIConstants.Spacing.lg)
     }
     
-    // MARK: - Menu Overlay
+    // MARK: - Expanding Menu Overlay
     private var menuOverlay: some View {
         ZStack {
-            Color.kaizenShadow.opacity(0.8)
+            // Blurred Background - Tapping anywhere dismisses
+            Rectangle()
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
                 .onTapGesture {
-                    withAnimation { isMenuExpanded = false }
+                    closeMenu()
                 }
             
             VStack(spacing: 20) {
-                workoutMenuButton(title: "Pushups", color: .kaizenSage)
-                workoutMenuButton(title: "Squats", color: .kaizenWood)
-                workoutMenuButton(title: "Plank", color: .kaizenGray)
+                Spacer()
+                
+                // Exercise Options - Staggered "Pop"
+                if isMenuExpanded {
+                    VStack(spacing: 16) {
+                        menuItem(title: "Pushups", icon: "figure.pushups", delay: 0.1) {
+                            closeMenu()
+                            path.append(.workoutSetup)
+                        }
+                        
+                        menuItem(title: "Squats", icon: "figure.cross.training", delay: 0.05) {
+                            closeMenu()
+                            path.append(.workoutSetup)
+                        }
+                        
+                        menuItem(title: "Plank", icon: "figure.strengthtraining.functional", delay: 0.0) {
+                            closeMenu()
+                            path.append(.workoutSetup)
+                        }
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+                
+                // Close / Large Plus Button
+                Button(action: {
+                    closeMenu()
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.kaizenWhite)
+                            .frame(width: 70, height: 70)
+                            .shadow(color: Color.kaizenSage.opacity(0.3), radius: 15, x: 0, y: 5)
+                        
+                        Image(systemName: "plus")
+                            .font(.system(size: 30, weight: .bold))
+                            .foregroundColor(.kaizenShadow)
+                            .rotationEffect(.degrees(45))
+                    }
+                }
+                .padding(.bottom, 25)
             }
-            .padding(.bottom, 150)
         }
     }
     
-    private func workoutMenuButton(title: String, color: Color) -> some View {
+    private func menuItem(title: String, icon: String, delay: Double, action: @escaping () -> Void) -> some View {
         Button(action: {
-            withAnimation {
-                isMenuExpanded = false
-                path.append(.workoutSetup)
-            }
+            HapticManager.shared.playSessionComplete()
+            action()
         }) {
-            Text(title)
-                .font(.kaizenSectionHeader)
-                .foregroundColor(.kaizenShadow)
-                .frame(width: 220, height: 64)
-                .background(color)
-                .clipShape(Capsule())
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                
+                Text(title.uppercased())
+                    .font(.system(size: 14, weight: .bold))
+                    .tracking(2)
+            }
+            .foregroundColor(.kaizenWhite)
+            .padding(.vertical, 14)
+            .padding(.horizontal, 24)
+            .background(
+                Capsule()
+                    .fill(Color.kaizenShadow.opacity(0.8))
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.kaizenGray.opacity(0.2), lineWidth: 1)
+                    )
+            )
+        }
+        .scaleEffect(isMenuExpanded ? 1.0 : 0.8)
+        .opacity(isMenuExpanded ? 1.0 : 0.0)
+        .animation(.spring(response: 0.4, dampingFraction: 0.7).delay(delay), value: isMenuExpanded)
+    }
+    
+    // MARK: - Helper Methods
+    private func closeMenu() {
+        HapticManager.shared.playWorkoutStart()
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            isMenuExpanded = false
         }
     }
     
