@@ -40,13 +40,7 @@ struct HomeView: View {
                 MasterHeaderCard(
                     tier: "Wooden",
                     aura: "Muted",
-                    weekday: weekday,
-                    onSettingsTap: { path.append(.settings) },
-                    onWeekdayTap: {
-                        withAnimation(.spring()) {
-                            showCalendarPanel = true
-                        }
-                    }
+                    onSettingsTap: { path.append(.settings) }
                 )
                 .padding(.top, 10)
                 
@@ -217,7 +211,8 @@ struct HomeView: View {
                     Circle()
                         .fill(Color.kaizenSage)
                         .frame(width: 64, height: 64)
-                        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        .shadow(color: Color.kaizenSage.opacity(0.4), radius: 15, x: 0, y: 0) // Core Glow
+                        .shadow(color: Color.kaizenSage.opacity(0.2), radius: 30, x: 0, y: 0) // Outer Glow
                     
                     Image(systemName: "plus")
                         .font(.title.weight(.bold))

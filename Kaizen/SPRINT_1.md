@@ -35,26 +35,25 @@
 
 ---
 
-## Issue 4: Master Header & Sword Card Consolidation
+## Issue 4: Master Header & Final Polish
 **Status:** ✅ Completed
-**Description:** Refactor disparate header elements into a unified Master Header Card.
+**Description:** Refactor header into a unified card, then polish it by enlarging branding and sword artwork while removing secondary clutter.
 
 **Work Accomplished:**
-- Created the `MasterHeaderCard` component consolidating branding, sword art, tier/aura info, settings, and weekday.
-- Redesigned the Sword Hero into a compact horizontal layout.
-- Repositioned the dashboard elements to create a more open, centered ritual area.
+- Created the `MasterHeaderCard` component consolidating all identity elements.
+- Enlarged "KAIZEN" branding and the horizontal sword artwork for a premium look.
+- Removed the weekday label to achieve a pure, minimalist focus.
 
 ---
 
-## Issue 5: Refined Workout Selection
+## Issue 5: Refined Workout Selection & Glow
 **Status:** ✅ Completed
-**Description:** Redesign the workout selection menu with glassmorphism, spring animations, and PR stats.
+**Description:** Redesign the workout selection menu and add a premium glow effect to the central action button.
 
 **Work Accomplished:**
-- Implemented `ultraThinMaterial` background with full-screen dismissal.
-- Created staggered spring animations for exercise buttons.
-- Integrated PR (Personal Record) stats into the selection cards for context.
-- Enhanced the floating "+" button with rotation and refined shadows.
+- Implemented `ultraThinMaterial` menu with staggered spring animations and PR stats.
+- Added a dual-layered sage-green glow to the central "+" button in `HomeView`.
+- Refined the floating action button rotation and shadow depth.
 
 ---
 
