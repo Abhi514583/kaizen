@@ -21,8 +21,8 @@ struct RainAtmosphere: View {
     @State private var drops: [RainDrop] = []
     @State private var splashes: [RainSplash] = []
     
-    let dropCount = 40
-    let windAngle: CGFloat = 5.0 // Degrees
+    let dropCount = 15 // Less frequency
+    let windAngle: CGFloat = 3.0 // More vertical
     
     var body: some View {
         TimelineView(.animation) { timeline in
@@ -39,16 +39,16 @@ struct RainAtmosphere: View {
                     context.stroke(
                         path,
                         with: .color(Color.kaizenWhite.opacity(drop.opacity)),
-                        lineWidth: 1
+                        lineWidth: 0.5 // Thinner lines
                     )
                 }
                 
                 // Draw splashes (Anime-style sparks)
                 for splash in splashes {
                     context.stroke(
-                        Path(ellipseIn: CGRect(x: splash.x - (10 * splash.scale), y: splash.y - (2 * splash.scale), width: 20 * splash.scale, height: 4 * splash.scale)),
-                        with: .color(Color.kaizenSage.opacity(splash.opacity)),
-                        lineWidth: 0.5
+                        Path(ellipseIn: CGRect(x: splash.x - (8 * splash.scale), y: splash.y - (1 * splash.scale), width: 16 * splash.scale, height: 2 * splash.scale)),
+                        with: .color(Color.kaizenSage.opacity(splash.opacity * 0.5)),
+                        lineWidth: 0.3
                     )
                 }
             }
@@ -72,9 +72,9 @@ struct RainAtmosphere: View {
         RainDrop(
             x: CGFloat.random(in: -50...size.width + 50),
             y: randomizeY ? CGFloat.random(in: -size.height...0) : -20,
-            length: CGFloat.random(in: 10...30),
-            speed: CGFloat.random(in: 15...25),
-            opacity: Double.random(in: 0.1...0.3)
+            length: CGFloat.random(in: 5...15), // Shorter drops
+            speed: CGFloat.random(in: 4...8), // Much slower
+            opacity: Double.random(in: 0.02...0.08) // Barely visible
         )
     }
     
