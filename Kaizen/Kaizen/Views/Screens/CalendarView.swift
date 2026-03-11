@@ -1,180 +1,210 @@
 import SwiftUI
 
-enum RitualStatus {
-    case completed, rest, empty
+// MARK: - Models
+enum RitualStatus: String, Codable {
+    case success, freeze, missed, future
 }
 
-extension Date: Identifiable {
-    public var id: String { self.description }
+struct SessionStats: Codable {
+    var volume: Int
+    var maxShot: Int
+    var goal: Int
 }
 
-struct DayCell: View {
+struct RitualDay: Identifiable, Codable {
+    let id: UUID
     let date: Date
-    let isCurrentMonth: Bool
-    let isToday: Bool
-    let ritualStatus: RitualStatus
-    let action: () -> Void
+    let status: RitualStatus
+    let stats: [String: SessionStats] // Key: "Pushups", "Squats", "Plank"
+}
+
+// MARK: - ViewModel / Mock Generator
+class CalendarViewModel: ObservableObject {
+    @Published var history: [RitualDay] = []
+    @Published var activeMonth: Date = Date()
     
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Text("\(Calendar.current.component(.day, from: date))")
-                    .font(.system(size: 16, weight: isToday ? .black : .bold))
-                    .foregroundColor(isToday ? .kaizenSage : (ritualStatus == .empty ? .kaizenGray.opacity(0.5) : .kaizenWhite))
-                
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 4, height: 4)
-                    .shadow(color: statusColor.opacity(0.8), radius: 2)
-                    .opacity(ritualStatus == .empty ? 0 : 1)
-            }
-            .frame(height: 45)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isToday ? Color.kaizenSage.opacity(0.1) : Color.clear)
-            )
-        }
+    private let calendar = Calendar.current
+    
+    init() {
+        generateMockHistory()
     }
     
-    private var statusColor: Color {
-        switch ritualStatus {
-        case .completed: return .kaizenSage
-        case .rest: return .kaizenGray
-        case .empty: return .clear
+    func generateMockHistory() {
+        var mockDays: [RitualDay] = []
+        let today = calendar.startOfDay(for: Date())
+        
+        for i in 0..<60 {
+            if let date = calendar.date(byAdding: .day, value: -i, to: today) {
+                let status: RitualStatus
+                if i == 0 { status = .future }
+                else if i % 15 == 0 { status = .missed }
+                else if i % 7 == 0 { status = .freeze }
+                else { status = .success }
+                
+                let stats: [String: SessionStats] = [
+                    "Pushups": SessionStats(volume: 50 + Int.random(in: -10...20), maxShot: 35 + Int.random(in: -5...10), goal: 50),
+                    "Squats": SessionStats(volume: 60 + Int.random(in: -5...15), maxShot: 40 + Int.random(in: -5...10), goal: 60),
+                    "Plank": SessionStats(volume: 120 + Int.random(in: -20...40), maxShot: 90 + Int.random(in: -10...30), goal: 120)
+                ]
+                
+                mockDays.append(RitualDay(id: UUID(), date: date, status: status, stats: stats))
+            }
         }
+        self.history = mockDays.reversed()
+    }
+    
+    func getStatus(for date: Date) -> RitualStatus {
+        if date > calendar.startOfDay(for: Date()) { return .future }
+        return history.first(where: { calendar.isDate($0.date, inSameDayAs: date) })?.status ?? .future
+    }
+    
+    func getDayData(for date: Date) -> RitualDay? {
+        history.first(where: { calendar.isDate($0.date, inSameDayAs: date) })
     }
 }
 
+// MARK: - Views
 struct CalendarView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedDate: Date? = nil
+    @StateObject private var vm = CalendarViewModel()
+    @Environment(\.dismiss) var dismiss
     @State private var viewMode: ViewMode = .monthly
-    @State private var activeMonth: Date = Date()
+    @State private var selectedDay: RitualDay? = nil
     
     enum ViewMode {
         case monthly, yearly
     }
     
-    // Mock Data for Ritual Consistency
-    private let calendar = Calendar.current
-    private let monthFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM YYYY"
-        return formatter
-    }()
-    
-    private let columns = Array(repeating: GridItem(.flexible()), count: 7)
-    
     var body: some View {
         ZStack {
-            // MARK: - Immersive Background
             Color.kaizenShadow.ignoresSafeArea()
             
             VStack(spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 12) {
-                            if viewMode == .monthly {
-                                Button(action: { changeMonth(by: -1) }) {
-                                    Image(systemName: "chevron.left")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.kaizenGray)
-                                }
-                            }
-                            
-                            Text(viewMode == .monthly ? monthFormatter.string(from: activeMonth).uppercased() : "2024 LEGACY")
-                                .font(.system(size: 24, weight: .black))
-                                .foregroundColor(.kaizenWhite)
-                                .tracking(2)
-                            
-                            if viewMode == .monthly {
-                                Button(action: { changeMonth(by: 1) }) {
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundColor(.kaizenGray)
-                                }
-                            }
-                        }
-                        
-                        Text("CONSISTENCY TRACKER")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.kaizenGray)
-                            .tracking(4)
-                    }
-                    Spacer()
-                    
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundColor(.kaizenGray.opacity(0.3))
-                    }
-                }
-                .padding(.horizontal, 24)
-                .padding(.top, 20)
+                headerSection
                 
-                // View Switcher
+                // Toggle
                 HStack(spacing: 0) {
-                    switcherButton(title: "MONTHLY", mode: .monthly)
-                    switcherButton(title: "YEARLY", mode: .yearly)
+                    toggleButton(title: "MONTHLY", mode: .monthly)
+                    toggleButton(title: "YEARLY", mode: .yearly)
                 }
-                .background(Color.black.opacity(0.2))
-                .cornerRadius(10)
+                .background(Color.black.opacity(0.3))
+                .cornerRadius(12)
                 .padding(.horizontal, 24)
                 
                 ScrollView(showsIndicators: false) {
                     if viewMode == .monthly {
-                        monthlyGridView
+                        MonthlyGridView(vm: vm, selectedDay: $selectedDay)
                     } else {
-                        YearlyHabitTracker(year: 2024)
-                            .padding(.horizontal, 24)
+                        YearlyHeatmapView(vm: vm)
                     }
                     
-                    // MARK: - Stats HUD
-                    HStack(spacing: 20) {
-                        miniStat(title: "TOTAL SESSIONS", value: "24", icon: "flame.fill", color: .kaizenSage)
-                        miniStat(title: "FREEZES USED", value: "2/8", icon: "heart.fill", color: .red)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 10)
+                    // Legend
+                    legendSection
+                        .padding(.top, 20)
                 }
             }
         }
-        .sheet(item: $selectedDate) { date in
-            DayDetailView(date: date)
-                .presentationDetents([.height(450)])
+        .sheet(item: $selectedDay) { ritualDay in
+            RitualManifestSheet(ritualDay: ritualDay)
+                .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
-        .navigationBarBackButtonHidden(true)
     }
     
-    private var monthlyGridView: some View {
-        VStack(spacing: 20) {
-            // Weekday Labels
-            HStack {
-                ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
-                    Text(day)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.kaizenGray)
-                        .frame(maxWidth: .infinity)
+    private var headerSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(viewMode == .monthly ? "RITUAL CALENDAR" : "LEGACY HEATMAP")
+                    .font(.system(size: 24, weight: .black))
+                    .foregroundColor(.kaizenWhite)
+                Text("CONSISTENCY IS POWER")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.kaizenGray)
+                    .tracking(4)
+            }
+            Spacer()
+            Button(action: { dismiss() }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundColor(.kaizenGray.opacity(0.3))
+            }
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 20)
+    }
+    
+    private func toggleButton(title: String, mode: ViewMode) -> some View {
+        Button(action: {
+            withAnimation(.spring()) { viewMode = mode }
+            HapticManager.shared.playWorkoutStart()
+        }) {
+            Text(title)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(viewMode == mode ? .white : .kaizenGray)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(viewMode == mode ? Color.kaizenGray.opacity(0.2) : Color.clear)
+        }
+    }
+    
+    private var legendSection: some View {
+        HStack(spacing: 20) {
+            legendItem(title: "SUCCESS", color: .kaizenSage)
+            legendItem(title: "FREEZE", color: .red, systemImage: "heart.fill")
+            legendItem(title: "MISSED", color: .black)
+        }
+    }
+    
+    private func legendItem(title: String, color: Color, systemImage: String? = nil) -> some View {
+        HStack(spacing: 6) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(color)
+                    .frame(width: 12, height: 12)
+                if let img = systemImage {
+                    Image(systemName: img)
+                        .font(.system(size: 6))
+                        .foregroundColor(.white)
                 }
             }
+            Text(title)
+                .font(.system(size: 8, weight: .black))
+                .foregroundColor(.kaizenGray)
+        }
+    }
+}
+
+struct MonthlyGridView: View {
+    @ObservedObject var vm: CalendarViewModel
+    @Binding var selectedDay: RitualDay?
+    private let calendar = Calendar.current
+    
+    var body: some View {
+        VStack(spacing: 15) {
+            // Month Nav
+            HStack {
+                Button(action: { changeMonth(by: -1) }) { Image(systemName: "chevron.left") }
+                Spacer()
+                Text(vm.activeMonth.formatted(.dateTime.month(.wide).year()).uppercased())
+                    .font(.system(size: 16, weight: .bold))
+                    .tracking(2)
+                Spacer()
+                Button(action: { changeMonth(by: 1) }) { Image(systemName: "chevron.right") }
+            }
+            .foregroundColor(.kaizenGray)
+            .padding(.horizontal, 40)
             
-            LazyVGrid(columns: columns, spacing: 15) {
+            // Grid
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 10) {
                 ForEach(daysInMonth(), id: \.self) { date in
                     if let date = date {
-                        DayCell(
-                            date: date,
-                            isCurrentMonth: calendar.isDate(date, equalTo: activeMonth, toGranularity: .month),
-                            isToday: calendar.isDateInToday(date),
-                            ritualStatus: getRitualStatus(for: date)
-                        ) {
-                            selectedDate = date
+                        DayCell(date: date, status: vm.getStatus(for: date)) {
+                            if let data = vm.getDayData(for: date) {
+                                selectedDay = data
+                            }
                         }
                     } else {
-                        Color.clear
-                            .frame(height: 45)
+                        Color.clear.frame(height: 45)
                     }
                 }
             }
@@ -182,75 +212,120 @@ struct CalendarView: View {
         .padding(.horizontal, 24)
     }
     
-    private func switcherButton(title: String, mode: ViewMode) -> some View {
-        Button(action: {
-            withAnimation(.spring(response: 0.3)) { viewMode = mode }
-            HapticManager.shared.playWorkoutStart()
-        }) {
-            Text(title)
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(viewMode == mode ? .kaizenWhite : .kaizenGray)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(viewMode == mode ? Color.kaizenGray.opacity(0.1) : Color.clear)
+    private func changeMonth(by value: Int) {
+        if let newDate = calendar.date(byAdding: .month, value: value, to: vm.activeMonth) {
+            withAnimation { vm.activeMonth = newDate }
         }
     }
     
-    // MARK: - Logic
-    private func changeMonth(by value: Int) {
-        if let newDate = calendar.date(byAdding: .month, value: value, to: activeMonth) {
-            withAnimation(.spring()) {
-                activeMonth = newDate
-            }
-        }
-    }
-
     private func daysInMonth() -> [Date?] {
-        guard let monthInterval = calendar.dateInterval(of: .month, for: activeMonth),
+        guard let monthInterval = calendar.dateInterval(of: .month, for: vm.activeMonth),
               let firstWeekday = calendar.dateComponents([.weekday], from: monthInterval.start).weekday else { return [] }
         
-        let days = calendar.range(of: .day, in: .month, for: activeMonth)!.count
+        let days = calendar.range(of: .day, in: .month, for: vm.activeMonth)!.count
         var dates: [Date?] = Array(repeating: nil, count: firstWeekday - 1)
-        
-        for day in 1...days {
-            if let date = calendar.date(byAdding: .day, value: day - 1, to: monthInterval.start) {
+        for d in 0..<days {
+            if let date = calendar.date(byAdding: .day, value: d, to: monthInterval.start) {
                 dates.append(date)
             }
         }
         return dates
     }
+}
+
+struct DayCell: View {
+    let date: Date
+    let status: RitualStatus
+    let action: () -> Void
     
-    private func getRitualStatus(for date: Date) -> RitualStatus {
-        let day = calendar.component(.day, from: date)
-        if day == 7 || day == 13 { return .rest } // Using rest color for freeze/broken in monthly for now
-        if day % 2 == 0 { return .completed }
-        return .empty
-    }
-    
-    private func miniStat(title: String, value: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-            VStack(alignment: .leading, spacing: 0) {
-                Text(title)
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(.kaizenGray)
-                Text(value)
-                    .font(.system(size: 16, weight: .black))
-                    .foregroundColor(.kaizenWhite)
+    var body: some View {
+        Button(action: action) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(backgroundColor)
+                    .frame(height: 45)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(status == .success ? Color.kaizenSage.opacity(0.3) : Color.clear, lineWidth: 1)
+                    )
+                
+                VStack(spacing: 2) {
+                    Text("\(Calendar.current.component(.day, from: date))")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(status == .future ? .kaizenGray.opacity(0.3) : .white)
+                    
+                    if status == .freeze {
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 8))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color.kaizenShadow.opacity(0.5))
-        .cornerRadius(16)
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.kaizenGray.opacity(0.1), lineWidth: 1))
+        .disabled(status == .future)
+    }
+    
+    private var backgroundColor: Color {
+        switch status {
+        case .success: return Color.kaizenSage.opacity(0.8) // Gold-equivalent in our palette
+        case .freeze: return .red.opacity(0.8)
+        case .missed: return .black
+        case .future: return Color.kaizenGray.opacity(0.05)
+        }
     }
 }
 
-// MARK: - Components REFINED
-struct DayDetailView: View {
-    let date: Date
+struct YearlyHeatmapView: View {
+    @ObservedObject var vm: CalendarViewModel
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 2) {
+                ForEach(0..<12) { m in
+                    VStack(spacing: 2) {
+                        ForEach(1...31, id: \.self) { d in
+                            if let date = dateFor(month: m + 1, day: d) {
+                                HabitCell(status: vm.getStatus(for: date))
+                            } else {
+                                Color.clear.frame(width: 8, height: 8)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 24)
+    }
+    
+    private func dateFor(month: Int, day: Int) -> Date? {
+        var comps = DateComponents()
+        comps.year = 2024
+        comps.month = month
+        comps.day = day
+        return Calendar.current.date(from: comps)
+    }
+}
+
+struct HabitCell: View {
+    let status: RitualStatus
+    var body: some View {
+        RoundedRectangle(cornerRadius: 1.5)
+            .fill(color)
+            .frame(width: 10, height: 10)
+    }
+    private var color: Color {
+        switch status {
+        case .success: return .kaizenSage
+        case .freeze: return .red
+        case .missed: return .black
+        case .future: return Color.white.opacity(0.05)
+        }
+    }
+}
+
+// MARK: - Ritual Manifest Sheet
+struct RitualManifestSheet: View {
+    let ritualDay: RitualDay
     
     var body: some View {
         ZStack {
@@ -259,43 +334,23 @@ struct DayDetailView: View {
             VStack(alignment: .leading, spacing: 25) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(date.formatted(.dateTime.day().month().year()))
+                        Text(ritualDay.date.formatted(.dateTime.day().month().year()))
                             .font(.system(size: 24, weight: .black))
-                            .foregroundColor(.kaizenWhite)
+                            .foregroundColor(.white)
                         Text("RITUAL MANIFEST")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.kaizenSage)
                             .tracking(3)
                     }
                     Spacer()
-                    ZStack {
-                        Circle()
-                            .fill(Color.kaizenSage.opacity(0.2))
-                            .frame(width: 50, height: 50)
-                            .blur(radius: 5)
-                        Image(systemName: "bolt.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.kaizenSage)
-                    }
+                    statusPill
                 }
                 
-                // Enhanced Stats List
                 VStack(spacing: 16) {
-                    historyRow(title: "PUSHUPS", shot: 35, total: 50, goal: 50, icon: "figure.pushups")
-                    historyRow(title: "SQUATS", shot: 40, total: 60, goal: 70, icon: "figure.squats")
-                    historyRow(title: "PLANK", shot: 90, total: 120, goal: 120, icon: "figure.plank", isTime: true)
+                    exerciseRow(title: "PUSHUPS", stats: ritualDay.stats["Pushups"], icon: "figure.pushups")
+                    exerciseRow(title: "SQUATS", stats: ritualDay.stats["Squats"], icon: "figure.cross.training")
+                    exerciseRow(title: "PLANK", stats: ritualDay.stats["Plank"], icon: "figure.strengthtraining.functional", isTime: true)
                 }
-                
-                // Summary Footer
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("TOTAL VOLUME")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.kaizenGray)
-                    Text("105 ACTIONS • 04:20 MINS")
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundColor(.kaizenWhite)
-                }
-                .padding(.top, 10)
                 
                 Spacer()
             }
@@ -303,33 +358,30 @@ struct DayDetailView: View {
         }
     }
     
-    private func historyRow(title: String, shot: Int, total: Int, goal: Int, icon: String, isTime: Bool = false) -> some View {
-        let isMax = total >= goal
-        
-        return VStack(spacing: 12) {
-            HStack(spacing: 15) {
+    private var statusPill: some View {
+        Text(ritualDay.status.rawValue.uppercased())
+            .font(.system(size: 10, weight: .black))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(ritualDay.status == .success ? Color.kaizenSage : (ritualDay.status == .freeze ? Color.red : Color.black))
+            .foregroundColor(.white)
+            .cornerRadius(20)
+    }
+    
+    private func exerciseRow(title: String, stats: SessionStats?, icon: String, isTime: Bool = false) -> some View {
+        VStack(spacing: 12) {
+            HStack {
                 Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .foregroundColor(isMax ? .kaizenSage : .kaizenGray)
-                    .frame(width: 30)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.kaizenWhite)
-                    
-                    if isMax {
-                        Text("GOAL ACHIEVED")
-                            .font(.system(size: 8, weight: .black))
-                            .foregroundColor(.kaizenSage)
-                    }
-                }
-                
+                    .foregroundColor(.kaizenGray)
+                    .frame(width: 20)
+                Text(title)
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text(isTime ? formatTime(shot) : "\(shot)")
-                        .font(.system(size: 20, weight: .black, design: .rounded))
+                    Text(stats != nil ? (isTime ? "\(stats!.maxShot)s" : "\(stats!.maxShot)") : "--")
+                        .font(.system(size: 18, weight: .black, design: .rounded))
                         .foregroundColor(.kaizenSage)
                     Text("1-SHOT MAX")
                         .font(.system(size: 8, weight: .bold))
@@ -337,39 +389,21 @@ struct DayDetailView: View {
                 }
             }
             
-            Divider()
-                .background(Color.kaizenGray.opacity(0.1))
+            Divider().background(Color.white.opacity(0.1))
             
             HStack {
-                statMiniLabel(title: "TOTAL VOLUME", value: isTime ? formatTime(total) : "\(total)")
+                Text("TOTAL VOLUME")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.kaizenGray)
                 Spacer()
-                statMiniLabel(title: "DAILY GOAL", value: isTime ? formatTime(goal) : "\(goal)")
+                Text(stats != nil ? (isTime ? "\(stats!.volume)s" : "\(stats!.volume)") : "--")
+                    .font(.system(size: 12, weight: .black))
+                    .foregroundColor(.white)
             }
         }
-        .padding(18)
-        .background(Color.white.opacity(0.03))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(isMax ? Color.kaizenSage.opacity(0.3) : Color.clear, lineWidth: 1)
-        )
-    }
-    
-    private func statMiniLabel(title: String, value: String) -> some View {
-        HStack(spacing: 6) {
-            Text(title)
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.kaizenGray)
-            Text(value)
-                .font(.system(size: 10, weight: .black))
-                .foregroundColor(.kaizenWhite)
-        }
-    }
-    
-    private func formatTime(_ seconds: Int) -> String {
-        let m = seconds / 60
-        let s = seconds % 60
-        return String(format: "%d:%02d", m, s)
+        .padding(16)
+        .background(Color.white.opacity(0.05))
+        .cornerRadius(12)
     }
 }
 
