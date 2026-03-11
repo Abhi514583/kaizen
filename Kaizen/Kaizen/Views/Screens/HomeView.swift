@@ -11,7 +11,6 @@ struct HomeView: View {
     @State private var isMenuExpanded = false
     @State private var auraOffset = CGSize.zero
     @State private var showCalendarPanel = false
-    @State private var heartOffsets: [CGSize] = Array(repeating: .zero, count: 8)
     
     private var profile: UserProfile? {
         profiles.first
@@ -66,9 +65,6 @@ struct HomeView: View {
                 .padding(.horizontal, UIConstants.Spacing.lg)
                 .padding(.top, 20)
                 
-                // MARK: - Freeze Row
-                freezeRow
-                
                 Spacer()
                 
                 // MARK: - Today's Ritual Targets
@@ -104,32 +100,6 @@ struct HomeView: View {
         .onAppear {
             ensureProfileExists()
         }
-    }
-    
-    // MARK: - Freeze Row
-    private var freezeRow: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<8) { index in
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 12))
-                    .foregroundColor(.red)
-                    .offset(heartOffsets[index])
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                heartOffsets[index] = value.translation
-                            }
-                            .onEnded { _ in
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                                    heartOffsets[index] = .zero
-                                }
-                            }
-                    )
-            }
-            Spacer()
-        }
-        .padding(.horizontal, UIConstants.Spacing.lg)
-        .padding(.top, 12)
     }
     
     // MARK: - Aura Element (Deprecated/Moved to SwordHeroCard)
