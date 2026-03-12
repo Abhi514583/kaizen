@@ -7,8 +7,7 @@ struct WorkoutView: View {
     let goal: Int
     
     @Environment(\.dismiss) private var dismiss
-    @State private var currentReps = 0
-    @State private var isPaused = false
+    @Environment(WorkoutManager.self) private var workoutManager
     
     var body: some View {
         ZStack {
@@ -51,43 +50,55 @@ struct WorkoutView: View {
                 
                 Spacer()
                 
-                // MARK: - Central Rep Counter
+                // MARK: - Central Rep/Timer Counter
                 VStack(spacing: -10) {
-                    Text("\(currentReps)")
-                        .font(.system(size: 160, weight: .black, design: .rounded))
+                    Text(workoutManager.activeSession?.exerciseType == .plank ? 
+                         String(format: "%02d:%02d", Int(workoutManager.currentDuration) / 60, Int(workoutManager.currentDuration) % 60) : 
+                         "\(workoutManager.currentReps)")
+                        .font(.system(size: workoutManager.activeSession?.exerciseType == .plank ? 120 : 160, weight: .black, design: .rounded))
                         .foregroundColor(.kaizenWhite)
                         .shadow(color: Color.kaizenSage.opacity(0.4), radius: 20)
                         .shadow(color: Color.kaizenSage.opacity(0.2), radius: 40)
                         .onTapGesture {
-                            currentReps += 1
-                            HapticManager.shared.playWorkoutStart()
+                            if workoutManager.activeSession?.exerciseType != .plank {
+                                workoutManager.updateReps(count: workoutManager.currentReps + 1)
+                                HapticManager.shared.playWorkoutStart()
+                            }
                         }
                     
-                    Text("REPS")
+                    Text(workoutManager.activeSession?.exerciseType == .plank ? "SECONDS" : "REPS")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.kaizenSage)
                         .tracking(10)
                         .offset(x: 5)
                 }
-                .scaleEffect(isPaused ? 0.9 : 1.0)
-                .opacity(isPaused ? 0.5 : 1.0)
-                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: currentReps)
+                .scaleEffect(workoutManager.isPaused ? 0.9 : 1.0)
+                .opacity(workoutManager.isPaused ? 0.5 : 1.0)
+                .animation(.spring(response: 0.4, dampingFraction: 0.6), value: workoutManager.currentReps)
                 
                 Spacer()
                 
                 // MARK: - Controls
                 HStack(spacing: 30) {
-                    controlButton(icon: isPaused ? "play.fill" : "pause.fill") {
-                        withAnimation { isPaused.toggle() }
+                    controlButton(icon: workoutManager.isPaused ? "play.fill" : "pause.fill") {
+                        workoutManager.togglePause()
                         HapticManager.shared.playWorkoutStart()
                     }
                     
-                    controlButton(icon: "xmark", isDestructive: true) {
+                    controlButton(icon: "checkmark", isDestructive: false) {
+                        let finalValue = workoutManager.activeSession?.exerciseType == .plank ? 
+                            Int(workoutManager.currentDuration) : workoutManager.currentReps
+                        
+                        workoutManager.completeWorkout()
+                        
                         if let exerciseType = ExerciseType(rawValue: exerciseName) {
-                            path.append(.sessionComplete(exerciseType, currentReps))
-                        } else {
-                            dismiss()
+                            path.append(.sessionComplete(exerciseType, finalValue))
                         }
+                    }
+                    
+                    controlButton(icon: "xmark", isDestructive: true) {
+                        workoutManager.cancelWorkout()
+                        dismiss()
                     }
                 }
                 .padding(.bottom, 40)

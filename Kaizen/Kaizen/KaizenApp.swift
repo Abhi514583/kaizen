@@ -26,9 +26,22 @@ struct KaizenApp: App {
         }
     }()
 
+    @State private var workoutManager = WorkoutManager()
+    @State private var streakManager = StreakManager()
+    @State private var progressManager = ProgressManager()
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(workoutManager)
+                .environment(streakManager)
+                .environment(progressManager)
+                .onAppear {
+                    let context = sharedModelContainer.mainContext
+                    workoutManager.setModelContext(context)
+                    streakManager.setModelContext(context)
+                    progressManager.setModelContext(context)
+                }
         }
         .modelContainer(sharedModelContainer)
     }

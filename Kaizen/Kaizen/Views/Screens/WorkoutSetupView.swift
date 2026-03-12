@@ -2,6 +2,7 @@ import SwiftUI
 
 struct WorkoutSetupView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(WorkoutManager.self) private var workoutManager
     @Binding var path: [KaizenRoute]
     let exerciseType: ExerciseType
     
@@ -39,6 +40,7 @@ struct WorkoutSetupView: View {
                     
                     Button(action: {
                         HapticManager.shared.playWorkoutStart()
+                        workoutManager.startWorkout(type: exerciseType, goal: 50) // Default goal for now
                         path.append(.activeWorkout(exerciseType))
                     }) {
                         Text("Start")

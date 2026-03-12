@@ -66,8 +66,10 @@ struct SessionCompleteView: View {
                     
                     // Stats Section
                     VStack(spacing: 4) {
-                        Text("\(count)")
-                            .font(.system(size: 72, weight: .black, design: .rounded))
+                        Text(exerciseType == .plank ? 
+                             String(format: "%02d:%02d", count / 60, count % 60) : 
+                             "\(count)")
+                            .font(.system(size: exerciseType == .plank ? 64 : 72, weight: .black, design: .rounded))
                             .foregroundColor(.kaizenWhite)
                         
                         Text(exerciseType.rawValue.uppercased())
