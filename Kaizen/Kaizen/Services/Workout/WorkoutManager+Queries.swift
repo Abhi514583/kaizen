@@ -38,4 +38,20 @@ extension WorkoutManager {
         
         return (try? context.fetch(descriptor))?.first
     }
+    
+    /// Fetches the DailySummary for a specific calendar day.
+    func fetchSummary(for date: Date) -> DailySummary? {
+        guard let context = modelContext else { return nil }
+        
+        let targetDate = Calendar.current.startOfDay(for: date)
+        
+        let predicate = #Predicate<DailySummary> { summary in
+            summary.date == targetDate
+        }
+        
+        var descriptor = FetchDescriptor<DailySummary>(predicate: predicate)
+        descriptor.fetchLimit = 1
+        
+        return (try? context.fetch(descriptor))?.first
+    }
 }

@@ -33,6 +33,14 @@ Transform the Kaizen UI prototype into a functional habit-tracking application b
     - **Storage Atomicity**: Ensured `WorkoutManager` only saves when explicitly completed, and correctly discards cancelled sessions.
     - **Architecture**: Opened up `WorkoutManager.modelContext` to internal access for modular query extensions.
 
+### [Issue 3] Daily Summary Aggregation
+**Goal**: Automatically aggregate workout sessions into daily totals for efficient tracking and streak logic.
+- **Implementation**:
+    - **Triggered Aggregation**: Updated `completeWorkout()` to invoke `updateDailySummary(for:)`.
+    - **Aggregation Logic**: Implemented `updateDailySummary` to fetch all completed sessions for the day, reset totals, and re-calculate aggregated values (`pushupsTotal`, `squatsTotal`, `plankTotal`, `sessionsCompleted`).
+    - **Persistence**: Efficiently handles creating new summaries or updating existing ones for a given calendar day.
+    - **Query Helper**: Added `fetchSummary(for:)` to `WorkoutManager+Queries.swift` for direct summary access.
+
 ## Architecture Decisions
 - **Services vs. Managers**: Services now handle domain/business rules, while Managers (Camera, Vision, Haptics) handle infrastructure.
 - **Environment Injection**: Preferred environment-based service instances over raw singletons to improve testability and follow modern SwiftUI patterns.

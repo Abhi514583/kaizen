@@ -66,16 +66,53 @@ final class WorkoutManager {
         stopTimer()
         guard let session = activeSession else { return }
         
-        session.date = Date()
+        let sessionDate = Date()
+        session.date = sessionDate
         session.repsOrDuration = session.exerciseType == .plank ? Int(currentDuration) : currentReps
         session.completed = true
         
         if let context = modelContext {
             context.insert(session)
             try? context.save()
+            
+            // Trigger DailySummary aggregation
+            updateDailySummary(for: sessionDate)
         }
         
-        // Note: DailySummary aggregation and Streak/Progress updates will be triggered here in later issues
+        // Note: Streak/Progress updates will be triggered here in later issues
+    }
+    
+    /// Aggregates all sessions for a given day into a DailySummary record.
+    func updateDailySummary(for date: Date) {
+        guard let context = modelContext else { return }
+        
+        let sessions = fetchSessions(for: date)
+        let summary = fetchSummary(for: date) ?? DailySummary(date: date)
+        
+        // Reset totals before re-aggregating
+        summary.pushupsTotal = 0
+        summary.squatsTotal = 0
+        summary.plankTotal = 0
+        summary.sessionsCompleted = 0
+        
+        for session in sessions where session.completed {
+            summary.sessionsCompleted += 1
+            
+            switch session.exerciseType {
+            case .pushups:
+                summary.pushupsTotal += session.repsOrDuration
+            case .squats:
+                summary.squatsTotal += session.repsOrDuration
+            case .plank:
+                summary.plankTotal += session.repsOrDuration
+            }
+        }
+        
+        if summary.modelContext == nil {
+            context.insert(summary)
+        }
+        
+        try? context.save()
     }
     
     func cancelWorkout() {
