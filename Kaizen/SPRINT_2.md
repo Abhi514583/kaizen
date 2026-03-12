@@ -41,6 +41,14 @@ Transform the Kaizen UI prototype into a functional habit-tracking application b
     - **Persistence**: Efficiently handles creating new summaries or updating existing ones for a given calendar day.
     - **Query Helper**: Added `fetchSummary(for:)` to `WorkoutManager+Queries.swift` for direct summary access.
 
+### [Issue 3.b] Temporary Manual Rep Input
+**Goal**: Enable end-to-end testing of the habit loop while pose detection is in development.
+- **Implementation**:
+    - **Testing Methods**: Added `addManualReps(_:)` and `addManualDuration(_:)` to `WorkoutManager`.
+    - **UI Controls**: Added minimalist `+1`, `+5`, and `+10s` buttons to `WorkoutView`.
+    - **UX Details**: Controls are dynamically disabled when the workout is paused to maintain state integrity.
+    - **Persistence Support**: These manual increments flow directly into the `DailySummary` aggregation logic.
+
 ## Architecture Decisions
 - **Services vs. Managers**: Services now handle domain/business rules, while Managers (Camera, Vision, Haptics) handle infrastructure.
 - **Environment Injection**: Preferred environment-based service instances over raw singletons to improve testability and follow modern SwiftUI patterns.

@@ -78,6 +78,27 @@ struct WorkoutView: View {
                 
                 Spacer()
                 
+                // MARK: - Testing Controls (Manual Input)
+                HStack(spacing: 16) {
+                    if workoutManager.activeSession?.exerciseType == .plank {
+                        manualButton(label: "+10s") {
+                            workoutManager.addManualDuration(10)
+                        }
+                    } else {
+                        manualButton(label: "+1") {
+                            workoutManager.addManualReps(1)
+                        }
+                        manualButton(label: "+5") {
+                            workoutManager.addManualReps(5)
+                        }
+                    }
+                }
+                .opacity(workoutManager.isPaused ? 0.3 : 1.0)
+                .disabled(workoutManager.isPaused)
+                .padding(.bottom, 20)
+                
+                Spacer()
+                
                 // MARK: - Controls
                 HStack(spacing: 30) {
                     controlButton(icon: workoutManager.isPaused ? "play.fill" : "pause.fill") {
@@ -126,6 +147,24 @@ struct WorkoutView: View {
             Text("04:20")
                 .font(.system(size: 18, weight: .bold, design: .monospaced))
                 .foregroundColor(.kaizenWhite)
+        }
+    }
+    
+    private func manualButton(label: String, action: @escaping () -> Void) -> some View {
+        Button(action: {
+            action()
+            HapticManager.shared.playWorkoutStart()
+        }) {
+            Text(label)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.kaizenSage)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 16)
+                .background(
+                    Capsule()
+                        .stroke(Color.kaizenSage.opacity(0.3), lineWidth: 1)
+                        .background(Color.kaizenSage.opacity(0.05))
+                )
         }
     }
     

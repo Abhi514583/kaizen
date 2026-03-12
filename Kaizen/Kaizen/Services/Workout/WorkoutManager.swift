@@ -62,6 +62,18 @@ final class WorkoutManager {
         currentReps = count
     }
     
+    /// Manual increment for testing habit loop logic without pose detection.
+    func addManualReps(_ count: Int) {
+        guard !isPaused else { return }
+        currentReps += count
+    }
+    
+    /// Manual increment for duration testing.
+    func addManualDuration(_ seconds: TimeInterval) {
+        guard !isPaused else { return }
+        currentDuration += seconds
+    }
+    
     func completeWorkout() {
         stopTimer()
         guard let session = activeSession else { return }
