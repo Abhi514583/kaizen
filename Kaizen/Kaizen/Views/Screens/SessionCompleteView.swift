@@ -115,25 +115,35 @@ struct SessionCompleteView: View {
                 if showContent {
                     VStack(spacing: 16) {
                         Button(action: {
-                            HapticManager.shared.playSessionComplete()
+                            HapticManager.shared.playWorkoutStart()
                         }) {
                             HStack {
                                 Image(systemName: "square.and.arrow.up")
                                 Text("SHARE RESULT")
                             }
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.kaizenShadow)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
-                            .background(Color.kaizenWhite)
-                            .cornerRadius(16)
                         }
+                        .buttonStyle(.kaizenPrimary)
                         
                         HStack(spacing: 12) {
-                            secondaryButton(title: "SAVE VIDEO", icon: "video.fill")
-                            secondaryButton(title: "DONE", icon: "checkmark") {
-                                path = [] // Root
+                            Button(action: {
+                                HapticManager.shared.playWorkoutStart()
+                            }) {
+                                HStack {
+                                    Image(systemName: "video.fill")
+                                    Text("SAVE VIDEO")
+                                }
                             }
+                            .buttonStyle(.kaizenSecondary)
+                            
+                            Button(action: {
+                                path = [] // Root
+                            }) {
+                                HStack {
+                                    Image(systemName: "checkmark")
+                                    Text("DONE")
+                                }
+                            }
+                            .buttonStyle(.kaizenSecondary)
                         }
                     }
                     .padding(.horizontal, 30)
@@ -151,25 +161,6 @@ struct SessionCompleteView: View {
                 showContent = true
                 HapticManager.shared.playSessionComplete()
             }
-        }
-    }
-    
-    private func secondaryButton(title: String, icon: String, action: @escaping () -> Void = {}) -> some View {
-        Button(action: action) {
-            HStack {
-                Image(systemName: icon)
-                Text(title)
-            }
-            .font(.system(size: 12, weight: .bold))
-            .foregroundColor(.kaizenWhite)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(Color.kaizenShadow)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.kaizenWhite.opacity(0.1), lineWidth: 1)
-            )
         }
     }
 }

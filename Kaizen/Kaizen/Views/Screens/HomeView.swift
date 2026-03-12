@@ -158,23 +158,9 @@ struct HomeView: View {
             Spacer()
             
             // Central Plus Button
-            Button(action: {
+            KaizenPlusButton(isExpanded: isMenuExpanded) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     isMenuExpanded.toggle()
-                    HapticManager.shared.playWorkoutStart()
-                }
-            }) {
-                ZStack {
-                    Circle()
-                        .fill(Color.kaizenSage)
-                        .frame(width: 64, height: 64)
-                        .shadow(color: Color.kaizenSage.opacity(0.4), radius: 15, x: 0, y: 0) // Core Glow
-                        .shadow(color: Color.kaizenSage.opacity(0.2), radius: 30, x: 0, y: 0) // Outer Glow
-                    
-                    Image(systemName: "plus")
-                        .font(.title.weight(.bold))
-                        .foregroundColor(.kaizenShadow)
-                        .rotationEffect(.degrees(isMenuExpanded ? 45 : 0))
                 }
             }
             .offset(y: -20)

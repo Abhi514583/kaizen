@@ -42,13 +42,9 @@ struct WorkoutSetupView: View {
                         path.append(.activeWorkout(exerciseType))
                     }) {
                         Text("Start")
-                            .font(.kaizenSectionHeader)
-                            .foregroundColor(.kaizenShadow)
-                            .padding(.horizontal, 48)
-                            .padding(.vertical, 16)
-                            .background(Color.kaizenSage)
-                            .clipShape(Capsule())
                     }
+                    .buttonStyle(.kaizenPrimary)
+                    .padding(.horizontal, 48)
                 }
                 
                 Spacer()
