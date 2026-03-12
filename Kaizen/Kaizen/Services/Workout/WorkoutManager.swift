@@ -22,7 +22,7 @@ final class WorkoutManager {
     
     // MARK: - Initialization
     // We will use an environment-injected ModelContext
-    private var modelContext: ModelContext?
+    var modelContext: ModelContext?
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext

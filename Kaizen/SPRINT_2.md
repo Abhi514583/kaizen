@@ -25,6 +25,14 @@ Transform the Kaizen UI prototype into a functional habit-tracking application b
         - `SessionCompleteView`: Formats and displays real session results, including MM:SS formatting for duration.
     - **Navigation**: Ensured accurate value passing (reps vs. seconds) via `KaizenRoute`.
 
+### [Issue 2] Workout Session Persistence
+**Goal**: Solidify SwiftData persistence and enable date-based retrieval.
+- **Implementation**:
+    - **Query Helpers**: Created `WorkoutManager+Queries.swift` providing `fetchSessions(for:)` and `fetchLatestSession(for:)` to allow other services to aggregate progress.
+    - **Multi-Session Support**: Verified that UUID-based session identity allows multiple workouts on the same day without conflicts.
+    - **Storage Atomicity**: Ensured `WorkoutManager` only saves when explicitly completed, and correctly discards cancelled sessions.
+    - **Architecture**: Opened up `WorkoutManager.modelContext` to internal access for modular query extensions.
+
 ## Architecture Decisions
 - **Services vs. Managers**: Services now handle domain/business rules, while Managers (Camera, Vision, Haptics) handle infrastructure.
 - **Environment Injection**: Preferred environment-based service instances over raw singletons to improve testability and follow modern SwiftUI patterns.
