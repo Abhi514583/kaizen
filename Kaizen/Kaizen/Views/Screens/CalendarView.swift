@@ -30,27 +30,7 @@ class CalendarViewModel: ObservableObject {
     }
     
     func generateMockHistory() {
-        var mockDays: [RitualDay] = []
-        let today = calendar.startOfDay(for: Date())
-        
-        for i in 0..<365 {
-            if let date = calendar.date(byAdding: .day, value: -i, to: today) {
-                let status: RitualStatus
-                if i == 0 { status = .inProgress }
-                else if i % 15 == 0 { status = .missed }
-                else if i % 7 == 0 { status = .freeze }
-                else { status = .success }
-                
-                let stats: [String: SessionStats] = [
-                    "Pushups": SessionStats(volume: 50 + Int.random(in: -10...20), maxShot: 35 + Int.random(in: -5...10), goal: 50),
-                    "Squats": SessionStats(volume: 60 + Int.random(in: -5...15), maxShot: 40 + Int.random(in: -5...10), goal: 60),
-                    "Plank": SessionStats(volume: 120 + Int.random(in: -20...40), maxShot: 90 + Int.random(in: -10...30), goal: 120)
-                ]
-                
-                mockDays.append(RitualDay(id: UUID(), date: date, status: status, stats: stats))
-            }
-        }
-        self.history = mockDays.reversed()
+        self.history = MockDataProvider.generateMockHistory()
     }
     
     func getStatus(for date: Date) -> RitualStatus {

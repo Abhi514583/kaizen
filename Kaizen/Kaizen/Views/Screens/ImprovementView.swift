@@ -89,33 +89,17 @@ struct ImprovementView: View {
     
     private var performanceCards: some View {
         VStack(spacing: 24) {
-            ProgressCard(
-                title: "Push-ups",
-                baseline: 12,
-                current: 35,
-                trend: [0.2, 0.35, 0.3, 0.5, 0.6, 0.85, 1.0],
-                icon: "figure.pushups",
-                animate: appearanceFactor
-            )
-            
-            ProgressCard(
-                title: "Squats",
-                baseline: 20,
-                current: 45,
-                trend: [0.1, 0.25, 0.4, 0.35, 0.55, 0.7, 0.9],
-                icon: "figure.cross.training",
-                animate: appearanceFactor
-            )
-            
-            ProgressCard(
-                title: "Plank",
-                baseline: 45,
-                current: 120,
-                trend: [0.3, 0.4, 0.35, 0.6, 0.5, 0.8, 1.0],
-                icon: "figure.strengthtraining.functional",
-                isTime: true,
-                animate: appearanceFactor
-            )
+            ForEach(MockDataProvider.mockPerformance) { mock in
+                ProgressCard(
+                    title: mock.title,
+                    baseline: mock.baseline,
+                    current: mock.current,
+                    trend: mock.trend,
+                    icon: mock.icon,
+                    isTime: mock.isTime,
+                    animate: appearanceFactor
+                )
+            }
         }
     }
 }

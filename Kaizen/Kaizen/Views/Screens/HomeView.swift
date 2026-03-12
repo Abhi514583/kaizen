@@ -16,15 +16,9 @@ struct HomeView: View {
         profiles.first
     }
     
-    // Mock data for Sprint 1
-    private let mockStreak = 10
+    private let mockTargets = MockDataProvider.mockTargets
+    private let mockStreak = MockDataProvider.mockStreak
     private let weekday = Date().formatted(.dateTime.weekday(.wide))
-    
-    private let mockTargets = [
-        ExerciseTarget(name: "Pushups", current: 30, goal: 30, color: .kaizenSage),
-        ExerciseTarget(name: "Squats", current: 20, goal: 50, color: .kaizenWood),
-        ExerciseTarget(name: "Plank", current: 45, goal: 60, color: .kaizenGray)
-    ]
     
     private var ritualStatus: RitualDotStatus {
         let completed = mockTargets.filter { $0.current >= $0.goal }.count

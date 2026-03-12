@@ -91,7 +91,7 @@ struct SessionCompleteView: View {
                         Spacer()
                         
                         // Small Flip Clock
-                        FlipClockHero(value: 12) // Mock day
+                        FlipClockHero(value: MockDataProvider.mockStreak)
                             .scaleEffect(0.6)
                             .frame(width: 70, height: 50)
                     }
