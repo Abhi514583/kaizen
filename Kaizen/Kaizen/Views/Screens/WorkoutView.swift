@@ -58,6 +58,10 @@ struct WorkoutView: View {
                         .foregroundColor(.kaizenWhite)
                         .shadow(color: Color.kaizenSage.opacity(0.4), radius: 20)
                         .shadow(color: Color.kaizenSage.opacity(0.2), radius: 40)
+                        .onTapGesture {
+                            currentReps += 1
+                            HapticManager.shared.playWorkoutStart()
+                        }
                     
                     Text("REPS")
                         .font(.system(size: 20, weight: .bold))

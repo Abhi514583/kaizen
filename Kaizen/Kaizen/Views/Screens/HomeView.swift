@@ -289,7 +289,11 @@ struct HomeView: View {
     }
     
     private func ensureProfileExists() {
-        if profiles.isEmpty {
+        // Defensive check to avoid duplicate insertion if onAppear fires multiple times rapidly
+        let descriptor = FetchDescriptor<UserProfile>()
+        let existingCount = (try? modelContext.fetchCount(descriptor)) ?? 0
+        
+        if existingCount == 0 && profiles.isEmpty {
             let newProfile = UserProfile()
             let newProgress = SwordProgress()
             newProfile.progress = newProgress

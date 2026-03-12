@@ -34,7 +34,7 @@ struct ProgressCard: View {
             
             Spacer()
             
-            let improvement = Int((Double(current - baseline) / Double(baseline)) * 100)
+            let improvement: Int = baseline > 0 ? Int((Double(current - baseline) / Double(baseline)) * 100) : 0
             Text("+\(improvement)%")
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.kaizenSage.opacity(0.6))

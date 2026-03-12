@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Models
 enum RitualStatus: String, Codable {
-    case success, freeze, missed, future
+    case success, freeze, missed, future, inProgress
 }
 
 struct SessionStats: Codable {
@@ -36,7 +36,7 @@ class CalendarViewModel: ObservableObject {
         for i in 0..<365 {
             if let date = calendar.date(byAdding: .day, value: -i, to: today) {
                 let status: RitualStatus
-                if i == 0 { status = .future }
+                if i == 0 { status = .inProgress }
                 else if i % 15 == 0 { status = .missed }
                 else if i % 7 == 0 { status = .freeze }
                 else { status = .success }
@@ -340,6 +340,7 @@ struct DayCell: View {
         case .freeze: return .red.opacity(0.8)
         case .missed: return .black
         case .future: return Color.kaizenGray.opacity(0.05)
+        case .inProgress: return Color.orange.opacity(0.8)
         }
     }
     
@@ -409,6 +410,7 @@ struct HabitCell: View {
         case .freeze: return .red
         case .missed: return .black
         case .future: return Color.white.opacity(0.05)
+        case .inProgress: return Color.orange
         }
     }
     
@@ -455,11 +457,19 @@ struct RitualManifestSheet: View {
     }
     
     private var statusPill: some View {
-        Text(ritualDay.status.rawValue.uppercased())
+        let status = ritualDay.status
+        return Text(status.rawValue.uppercased())
             .font(.system(size: 10, weight: .black))
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
-            .background(ritualDay.status == .success ? Color.kaizenSage : (ritualDay.status == .freeze ? Color.red : Color.black))
+            .background(
+                Group {
+                    if status == .success { Color.kaizenSage }
+                    else if status == .freeze { Color.red }
+                    else if status == .inProgress { Color.orange }
+                    else { Color.black }
+                }
+            )
             .foregroundColor(.white)
             .cornerRadius(20)
     }
