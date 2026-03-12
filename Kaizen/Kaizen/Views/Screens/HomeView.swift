@@ -25,6 +25,17 @@ struct HomeView: View {
         ExerciseTarget(name: "Squats", current: 20, goal: 50, color: .kaizenWood),
         ExerciseTarget(name: "Plank", current: 45, goal: 60, color: .kaizenGray)
     ]
+    
+    private var ritualStatus: RitualDotStatus {
+        let completed = mockTargets.filter { $0.current >= $0.goal }.count
+        if completed == mockTargets.count {
+            return .completed
+        } else if mockTargets.contains(where: { $0.current > 0 }) {
+            return .inProgress
+        } else {
+            return .notStarted
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -55,9 +66,7 @@ struct HomeView: View {
                         HStack(alignment: .bottom, spacing: 10) {
                             FlipClockHero(value: mockStreak)
                             
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 10, height: 10)
+                            RitualDot(status: ritualStatus)
                                 .padding(.bottom, 12)
                         }
                         
@@ -118,53 +127,20 @@ struct HomeView: View {
     
     // MARK: - Targets Section
     private var targetsSection: some View {
-        HStack(spacing: 12) {
-            ForEach(mockTargets) { target in
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(target.name.uppercased())
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.kaizenGray)
-                        .tracking(1)
-                    
-                    if target.current >= target.goal {
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(target.color)
-                            Text("DONE")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
-                                .foregroundColor(.kaizenWhite)
-                        }
-                    } else {
-                        HStack(alignment: .firstTextBaseline, spacing: 2) {
-                            Text("\(target.current)")
-                                .font(.system(size: 20, weight: .bold, design: .rounded))
-                                .foregroundColor(.kaizenWhite)
-                            Text("/\(target.goal)")
-                                .font(.system(size: 12, weight: .medium, design: .rounded))
-                                .foregroundColor(.kaizenGray)
-                        }
-                    }
-                    
-                    // Simple progress bar
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Color.kaizenGray.opacity(0.2))
-                            Capsule()
-                                .fill(target.color)
-                                .frame(width: geo.size.width * min(1.0, CGFloat(target.current) / CGFloat(target.goal)))
-                        }
-                    }
-                    .frame(height: 4)
+        VStack(spacing: 16) {
+            HStack {
+                Text("DAILY RITUAL")
+                    .font(.system(size: 10, weight: .black))
+                    .foregroundColor(.kaizenGray)
+                    .tracking(1)
+                Spacer()
+            }
+            .padding(.leading, 4)
+            
+            VStack(spacing: 12) {
+                ForEach(mockTargets) { target in
+                    ExerciseTargetCard(target: target)
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, minHeight: 80)
-                .background(Color.kaizenShadow.opacity(0.4))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.kaizenGray.opacity(0.1), lineWidth: 1)
-                )
             }
         }
         .padding(.horizontal, UIConstants.Spacing.lg)
@@ -326,13 +302,7 @@ struct HomeView: View {
 }
 
 // Supporting Models for Preview/Mock
-struct ExerciseTarget: Identifiable {
-    let id = UUID()
-    let name: String
-    let current: Int
-    let goal: Int
-    let color: Color
-}
+
 
 // Helper for rounded corners on specific sides
 extension View {

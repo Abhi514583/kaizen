@@ -145,11 +145,19 @@ struct CalendarView: View {
     
     private var headerSection: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(viewMode == .monthly ? "RITUAL CALENDAR" : "LEGACY HEATMAP")
-                    .font(.system(size: 24, weight: .black))
-                    .foregroundColor(.kaizenWhite)
-                Text("CONSISTENCY IS POWER")
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Text(viewMode == .monthly ? "RITUALS" : "LEGACY")
+                        .font(.system(size: 24, weight: .black))
+                        .foregroundColor(.kaizenWhite)
+                    
+                    Circle()
+                        .fill(Color.kaizenSage)
+                        .frame(width: 6, height: 6)
+                        .padding(.bottom, 8)
+                }
+                
+                Text(viewMode == .monthly ? "CONSISTENCY IS POWER" : "THE PATH RECORDED")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.kaizenGray)
                     .tracking(4)
@@ -162,16 +170,30 @@ struct CalendarView: View {
     
     private func toggleButton(title: String, mode: ViewMode) -> some View {
         Button(action: {
-            withAnimation(.spring()) { viewMode = mode }
-            HapticManager.shared.playWorkoutStart()
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                viewMode = mode
+                HapticManager.shared.playWorkoutStart()
+            }
         }) {
             Text(title)
-                .font(.system(size: 10, weight: .bold))
+                .font(.system(size: 10, weight: .black))
                 .foregroundColor(viewMode == mode ? .white : .kaizenGray)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(viewMode == mode ? Color.kaizenGray.opacity(0.2) : Color.clear)
+                .frame(height: 38)
+                .background(
+                    ZStack {
+                        if viewMode == mode {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.white.opacity(0.08))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                )
+                        }
+                    }
+                )
         }
+        .padding(4)
     }
     
     private var legendSection: some View {
@@ -476,8 +498,14 @@ struct RitualManifestSheet: View {
             }
         }
         .padding(16)
-        .background(Color.white.opacity(0.05))
-        .cornerRadius(12)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.white.opacity(0.03))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.05), lineWidth: 1)
+                )
+        )
     }
 }
 

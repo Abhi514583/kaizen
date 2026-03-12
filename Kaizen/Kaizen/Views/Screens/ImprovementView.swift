@@ -14,55 +14,9 @@ struct ImprovementView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 32) {
-                        // Title Header
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Progress")
-                                .font(.system(size: 34, weight: .black, design: .rounded))
-                                .foregroundColor(.white)
-                            
-                            Text("1% BETTER EVERY DAY")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.kaizenGray.opacity(0.6))
-                                .tracking(2)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 8)
-
-                        // Consistency Summary (Hero Layout)
-
-                        // Consistency Summary (Hero Layout)
+                        titleHeader
                         summaryModule
-                        
-                        // Exercise Performance Cards
-                        VStack(spacing: 24) {
-                            ProgressCard(
-                                title: "Push-ups",
-                                baseline: 12,
-                                current: 35,
-                                trend: [0.2, 0.35, 0.3, 0.5, 0.6, 0.85, 1.0],
-                                icon: "figure.pushups",
-                                animate: appearanceFactor
-                            )
-                            
-                            ProgressCard(
-                                title: "Squats",
-                                baseline: 20,
-                                current: 45,
-                                trend: [0.1, 0.25, 0.4, 0.35, 0.55, 0.7, 0.9],
-                                icon: "figure.cross.training",
-                                animate: appearanceFactor
-                            )
-                            
-                            ProgressCard(
-                                title: "Plank",
-                                baseline: 45,
-                                current: 120,
-                                trend: [0.3, 0.4, 0.35, 0.6, 0.5, 0.8, 1.0],
-                                icon: "figure.strengthtraining.functional",
-                                isTime: true,
-                                animate: appearanceFactor
-                            )
-                        }
+                        performanceCards
                     }
                     .padding(.horizontal, 24)
                     .padding(.bottom, 40)
@@ -109,121 +63,64 @@ struct ImprovementView: View {
                 .tracking(1)
         }
     }
-}
-
-struct ProgressCard: View {
-    let title: String
-    let baseline: Int
-    let current: Int
-    let trend: [Double]
-    let icon: String
-    var isTime: Bool = false
-    var animate: Double
     
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title.uppercased())
-                        .font(.system(size: 14, weight: .black))
-                        .foregroundColor(.white)
-                        .tracking(1)
-                    
-                    HStack(spacing: 12) {
-                        statLabel(label: "Baseline", value: "\(baseline)\(isTime ? "s" : "")")
-                        statLabel(label: "Current", value: "\(current)\(isTime ? "s" : "")", isHero: true)
-                    }
-                }
+    // MARK: - Subviews
+    private var titleHeader: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Text("PROGRESS")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
                 
-                Spacer()
-                
-                let improvement = Int((Double(current - baseline) / Double(baseline)) * 100)
-                Text("+\(improvement)%")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.kaizenSage.opacity(0.6))
-                    .padding(.top, 4)
-            }
-            
-            // Sparkline with Baseline Indicator
-            ZStack(alignment: .leading) {
-                // Baseline marker
                 Circle()
-                    .fill(Color.kaizenSage.opacity(0.4))
-                    .frame(width: 4, height: 4)
-                    .offset(y: 20 - (CGFloat(trend[0]) * 40)) // Centered on first data point
-                
-                Sparkline(data: trend, completion: animate)
-                    .stroke(Color.kaizenSage, lineWidth: 2)
-                    .frame(height: 40)
-                    .background(
-                        Sparkline(data: trend, completion: animate)
-                            .stroke(Color.kaizenSage.opacity(0.2), lineWidth: 4)
-                            .blur(radius: 4)
-                    )
+                    .fill(Color.kaizenSage)
+                    .frame(width: 8, height: 8)
+                    .padding(.bottom, 12)
             }
+            
+            Text("1% BETTER EVERY DAY")
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(.kaizenGray.opacity(0.6))
+                .tracking(2)
         }
-        .padding(24)
-        .background(Color.white.opacity(0.04))
-        .cornerRadius(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 8)
     }
     
-    private func statLabel(label: String, value: String, isHero: Bool = false) -> some View {
-        HStack(spacing: 4) {
-            Text(label + ":")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.kaizenGray)
-            Text(value)
-                .font(.system(size: 10, weight: .black))
-                .foregroundColor(isHero ? .kaizenSage : .white)
+    private var performanceCards: some View {
+        VStack(spacing: 24) {
+            ProgressCard(
+                title: "Push-ups",
+                baseline: 12,
+                current: 35,
+                trend: [0.2, 0.35, 0.3, 0.5, 0.6, 0.85, 1.0],
+                icon: "figure.pushups",
+                animate: appearanceFactor
+            )
+            
+            ProgressCard(
+                title: "Squats",
+                baseline: 20,
+                current: 45,
+                trend: [0.1, 0.25, 0.4, 0.35, 0.55, 0.7, 0.9],
+                icon: "figure.cross.training",
+                animate: appearanceFactor
+            )
+            
+            ProgressCard(
+                title: "Plank",
+                baseline: 45,
+                current: 120,
+                trend: [0.3, 0.4, 0.35, 0.6, 0.5, 0.8, 1.0],
+                icon: "figure.strengthtraining.functional",
+                isTime: true,
+                animate: appearanceFactor
+            )
         }
     }
 }
 
-struct Sparkline: Shape {
-    let data: [Double]
-    var completion: Double
-    
-    var animatableData: Double {
-        get { completion }
-        set { completion = newValue }
-    }
-    
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        guard data.count > 1 else { return path }
-        
-        let step = rect.width / CGFloat(data.count - 1)
-        var points: [CGPoint] = []
-        
-        for (index, value) in data.enumerated() {
-            let x = CGFloat(index) * step
-            let y = rect.height - (CGFloat(value) * rect.height)
-            points.append(CGPoint(x: x, y: y))
-        }
-        
-        // Animated path
-        path.move(to: points[0])
-        let totalPoints = Int(Double(points.count - 1) * completion)
-        
-        if totalPoints >= 1 {
-            for i in 1...totalPoints {
-                path.addLine(to: points[i])
-            }
-            
-            // Draw the partial segment
-            if totalPoints < points.count - 1 {
-                let remainder = (Double(points.count - 1) * completion).truncatingRemainder(dividingBy: 1)
-                let p1 = points[totalPoints]
-                let p2 = points[totalPoints + 1]
-                let dx = p2.x - p1.x
-                let dy = p2.y - p1.y
-                path.addLine(to: CGPoint(x: p1.x + dx * CGFloat(remainder), y: p1.y + dy * CGFloat(remainder)))
-            }
-        }
-        
-        return path
-    }
-}
+
 
 #Preview {
     NavigationStack {

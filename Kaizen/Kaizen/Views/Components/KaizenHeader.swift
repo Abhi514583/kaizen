@@ -17,11 +17,18 @@ struct KaizenHeader: View {
                     HapticManager.shared.playWorkoutStart()
                     onBack?()
                 }) {
-                    Text("KAIZEN")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.kaizenWhite)
-                        .tracking(3)
-                        .contentShape(Rectangle())
+                    HStack(spacing: 6) {
+                        Text("KAIZEN")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.kaizenWhite)
+                            .tracking(3)
+                        
+                        Circle()
+                            .fill(Color.kaizenSage)
+                            .frame(width: 6, height: 6)
+                            .padding(.bottom, 8)
+                    }
+                    .contentShape(Rectangle())
                 }
             }
             
