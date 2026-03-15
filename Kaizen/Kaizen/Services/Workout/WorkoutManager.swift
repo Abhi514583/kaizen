@@ -24,6 +24,7 @@ final class WorkoutManager {
     // We will use an environment-injected ModelContext
     var modelContext: ModelContext?
     var streakManager: StreakManager?
+    var progressManager: ProgressManager?
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
@@ -35,6 +36,10 @@ final class WorkoutManager {
     
     func setStreakManager(_ manager: StreakManager) {
         self.streakManager = manager
+    }
+    
+    func setProgressManager(_ manager: ProgressManager) {
+        self.progressManager = manager
     }
     
     // MARK: - Session Lifecycle
@@ -97,6 +102,7 @@ final class WorkoutManager {
             
             if let profile = fetchProfile() {
                 streakManager?.onActivityCompleted(profile: profile)
+                progressManager?.updateBaselines(profile: profile)
             }
         }
     }

@@ -1,10 +1,12 @@
 import SwiftUI
+import SwiftData
 
 struct SessionCompleteView: View {
     @Binding var path: [KaizenRoute]
     let exerciseType: ExerciseType
     let count: Int
     
+    @Query private var profiles: [UserProfile]
     @State private var showContent = false
     
     var body: some View {
@@ -93,7 +95,7 @@ struct SessionCompleteView: View {
                         Spacer()
                         
                         // Small Flip Clock
-                        FlipClockHero(value: MockDataProvider.mockStreak)
+                        FlipClockHero(value: profiles.first?.currentStreak ?? 0)
                             .scaleEffect(0.6)
                             .frame(width: 70, height: 50)
                     }

@@ -44,6 +44,7 @@ struct KaizenApp: App {
                     
                     // Connect services
                     workoutManager.setStreakManager(streakManager)
+                    workoutManager.setProgressManager(progressManager)
                 }
         }
         .modelContainer(sharedModelContainer)
