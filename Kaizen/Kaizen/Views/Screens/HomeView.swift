@@ -7,6 +7,7 @@ struct HomeView: View {
     @Environment(ProgressManager.self) private var progressManager
     @Query private var profiles: [UserProfile]
     @Query(sort: \ExerciseSession.date, order: .reverse) private var sessions: [ExerciseSession]
+    @Query(sort: \DailySummary.date, order: .reverse) private var summaries: [DailySummary]
     
     @Binding var path: [KaizenRoute]
     
@@ -18,7 +19,20 @@ struct HomeView: View {
         profiles.first
     }
     
-    private let mockTargets = MockDataProvider.mockTargets
+    private var todaySummary: DailySummary? {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        return summaries.first(where: { calendar.isDate($0.date, inSameDayAs: today) })
+    }
+    
+    private var realTargets: [ExerciseTarget] {
+        [
+            ExerciseTarget(name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: 30, color: .kaizenSage),
+            ExerciseTarget(name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: 50, color: .kaizenWood),
+            ExerciseTarget(name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: 60, color: .kaizenGray)
+        ]
+    }
+    
     private let weekday = Date().formatted(.dateTime.weekday(.wide))
     
     private var currentStreak: Int {
@@ -30,10 +44,11 @@ struct HomeView: View {
     }
     
     private var ritualStatus: RitualDotStatus {
-        let completed = mockTargets.filter { $0.current >= $0.goal }.count
-        if completed == mockTargets.count {
+        let targets = realTargets
+        let completed = targets.filter { $0.current >= $0.goal }.count
+        if completed == targets.count {
             return .completed
-        } else if mockTargets.contains(where: { $0.current > 0 }) {
+        } else if targets.contains(where: { $0.current > 0 }) {
             return .inProgress
         } else {
             return .notStarted
@@ -145,7 +160,7 @@ struct HomeView: View {
             .padding(.leading, 4)
             
             VStack(spacing: 12) {
-                ForEach(mockTargets) { target in
+                ForEach(realTargets) { target in
                     ExerciseTargetCard(target: target)
                 }
             }
