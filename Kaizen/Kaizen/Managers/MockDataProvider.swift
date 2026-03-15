@@ -67,7 +67,9 @@ struct MockDataProvider {
                     "Plank": SessionStats(volume: 120 + Int.random(in: -20...40), maxShot: 90 + Int.random(in: -10...30), goal: 120)
                 ]
                 
-                mockDays.append(RitualDay(id: UUID(), date: date, status: status, stats: stats))
+                let mockSessionsCompleted = status == .success ? Int.random(in: 1...3) : 0
+                
+                mockDays.append(RitualDay(id: UUID(), date: date, status: status, stats: stats, sessionsCompleted: mockSessionsCompleted))
             }
         }
         return mockDays.reversed()

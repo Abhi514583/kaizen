@@ -17,6 +17,7 @@ struct RitualDay: Identifiable, Codable {
     let date: Date
     let status: RitualStatus
     let stats: [String: SessionStats] // Key: "Pushups", "Squats", "Plank"
+    let sessionsCompleted: Int
 }
 
 // MARK: - ViewModel / Mock Generator
@@ -68,7 +69,7 @@ class CalendarViewModel: ObservableObject {
                     "Plank": SessionStats(volume: summary.plankTotal, maxShot: plankMax, goal: 0)
                 ]
                 
-                newHistory.append(RitualDay(id: UUID(), date: startOfDay, status: status, stats: stats))
+                newHistory.append(RitualDay(id: UUID(), date: startOfDay, status: status, stats: stats, sessionsCompleted: summary.sessionsCompleted))
             }
             
             self.history = newHistory
@@ -93,7 +94,24 @@ class CalendarViewModel: ObservableObject {
     }
     
     func getDayData(for date: Date) -> RitualDay? {
-        history.first(where: { calendar.isDate($0.date, inSameDayAs: date) })
+        let startOfDay = calendar.startOfDay(for: date)
+        
+        if let existing = history.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+            return existing
+        }
+        
+        // Return a synthesized Empty Day for historical days that had no data logged
+        let today = calendar.startOfDay(for: Date())
+        if startOfDay <= today {
+            let status = getStatus(for: startOfDay)
+            return RitualDay(id: UUID(),
+                             date: startOfDay,
+                             status: status,
+                             stats: [:],
+                             sessionsCompleted: 0)
+        }
+        
+        return nil
     }
 }
 
@@ -479,13 +497,43 @@ struct RitualManifestSheet: View {
                             .tracking(3)
                     }
                     Spacer()
-                    statusPill
+                    
+                    VStack(alignment: .trailing, spacing: 4) {
+                        statusPill
+                        
+                        if ritualDay.sessionsCompleted > 0 {
+                            Text("\(ritualDay.sessionsCompleted) SESSIONS")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundColor(.kaizenGray)
+                        }
+                    }
                 }
                 
-                VStack(spacing: 16) {
-                    exerciseRow(title: "PUSHUPS", stats: ritualDay.stats["Pushups"], icon: "figure.pushups")
-                    exerciseRow(title: "SQUATS", stats: ritualDay.stats["Squats"], icon: "figure.cross.training")
-                    exerciseRow(title: "PLANK", stats: ritualDay.stats["Plank"], icon: "figure.strengthtraining.functional", isTime: true)
+                if ritualDay.sessionsCompleted > 0 {
+                    VStack(spacing: 16) {
+                        exerciseRow(title: "PUSHUPS", stats: ritualDay.stats["Pushups"], icon: "figure.pushups")
+                        exerciseRow(title: "SQUATS", stats: ritualDay.stats["Squats"], icon: "figure.cross.training")
+                        exerciseRow(title: "PLANK", stats: ritualDay.stats["Plank"], icon: "figure.strengthtraining.functional", isTime: true)
+                    }
+                } else {
+                    Spacer()
+                        .frame(height: 40)
+                    
+                    VStack(spacing: 12) {
+                        Image(systemName: "moon.zzz.fill")
+                            .font(.system(size: 40))
+                            .foregroundColor(.kaizenGray.opacity(0.3))
+                        
+                        Text(ritualDay.status == .future ? "THE FUTURE AWAITS" : "REST AND RECOVERY")
+                            .font(.system(size: 14, weight: .black))
+                            .foregroundColor(.kaizenGray)
+                            .tracking(2)
+                        
+                        Text("No training activity recorded for this date.")
+                            .font(.system(size: 12))
+                            .foregroundColor(.kaizenGray.opacity(0.6))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
                 
                 Spacer()
