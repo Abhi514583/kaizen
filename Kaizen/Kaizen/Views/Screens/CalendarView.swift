@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 // MARK: - Models
 enum RitualStatus: String, Codable {
@@ -25,17 +26,70 @@ class CalendarViewModel: ObservableObject {
     
     private let calendar = Calendar.current
     
-    init() {
-        generateMockHistory()
-    }
+    init() {}
     
-    func generateMockHistory() {
-        self.history = MockDataProvider.generateMockHistory()
+    func loadRealData(context: ModelContext) {
+        let summaryDescriptor = FetchDescriptor<DailySummary>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+        let sessionDescriptor = FetchDescriptor<ExerciseSession>()
+        
+        do {
+            let summaries = try context.fetch(summaryDescriptor)
+            let allSessions = (try? context.fetch(sessionDescriptor)) ?? []
+            
+            var newHistory: [RitualDay] = []
+            let today = calendar.startOfDay(for: Date())
+            
+            for summary in summaries {
+                let startOfDay = calendar.startOfDay(for: summary.date)
+                let daySessions = allSessions.filter { calendar.isDate($0.date, inSameDayAs: startOfDay) }
+                
+                let pushupSessions = daySessions.filter { $0.exerciseType == .pushups }
+                let squatSessions = daySessions.filter { $0.exerciseType == .squats }
+                let plankSessions = daySessions.filter { $0.exerciseType == .plank }
+                
+                let pushupMax = pushupSessions.map { $0.repsOrDuration }.max() ?? 0
+                let squatMax = squatSessions.map { $0.repsOrDuration }.max() ?? 0
+                let plankMax = plankSessions.map { $0.repsOrDuration }.max() ?? 0
+                
+                let status: RitualStatus
+                if summary.freezeUsed {
+                    status = .freeze
+                } else if summary.sessionsCompleted > 0 {
+                    status = .success
+                } else if startOfDay < today {
+                    status = .missed
+                } else {
+                    status = .inProgress
+                }
+                
+                let stats: [String: SessionStats] = [
+                    "Pushups": SessionStats(volume: summary.pushupsTotal, maxShot: pushupMax, goal: 0),
+                    "Squats": SessionStats(volume: summary.squatsTotal, maxShot: squatMax, goal: 0),
+                    "Plank": SessionStats(volume: summary.plankTotal, maxShot: plankMax, goal: 0)
+                ]
+                
+                newHistory.append(RitualDay(id: UUID(), date: startOfDay, status: status, stats: stats))
+            }
+            
+            self.history = newHistory
+            
+        } catch {
+            print("Failed to load Calendar data: \(error)")
+        }
     }
     
     func getStatus(for date: Date) -> RitualStatus {
-        if date > calendar.startOfDay(for: Date()) { return .future }
-        return history.first(where: { calendar.isDate($0.date, inSameDayAs: date) })?.status ?? .future
+        let startOfDay = calendar.startOfDay(for: date)
+        let today = calendar.startOfDay(for: Date())
+        
+        if startOfDay > today { return .future }
+        
+        if let existing = history.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
+            return existing.status
+        }
+        
+        if startOfDay == today { return .inProgress }
+        return .missed
     }
     
     func getDayData(for date: Date) -> RitualDay? {
@@ -46,6 +100,7 @@ class CalendarViewModel: ObservableObject {
 // MARK: - Views
 struct CalendarView: View {
     @StateObject private var vm = CalendarViewModel()
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) var dismiss
     let tier: String // "Wooden", "Silver", "Black", etc.
     @State private var viewMode: ViewMode = .monthly
@@ -120,6 +175,9 @@ struct CalendarView: View {
             RitualManifestSheet(ritualDay: ritualDay)
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
+        }
+        .onAppear {
+            vm.loadRealData(context: modelContext)
         }
     }
     
