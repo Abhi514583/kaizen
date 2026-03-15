@@ -23,6 +23,7 @@ final class WorkoutManager {
     // MARK: - Initialization
     // We will use an environment-injected ModelContext
     var modelContext: ModelContext?
+    var streakManager: StreakManager?
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
@@ -30,6 +31,10 @@ final class WorkoutManager {
     
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+    
+    func setStreakManager(_ manager: StreakManager) {
+        self.streakManager = manager
     }
     
     // MARK: - Session Lifecycle
@@ -89,9 +94,17 @@ final class WorkoutManager {
             
             // Trigger DailySummary aggregation
             updateDailySummary(for: sessionDate)
+            
+            if let profile = fetchProfile() {
+                streakManager?.onActivityCompleted(profile: profile)
+            }
         }
-        
-        // Note: Streak/Progress updates will be triggered here in later issues
+    }
+    
+    private func fetchProfile() -> UserProfile? {
+        guard let context = modelContext else { return nil }
+        let descriptor = FetchDescriptor<UserProfile>()
+        return (try? context.fetch(descriptor))?.first
     }
     
     /// Aggregates all sessions for a given day into a DailySummary record.

@@ -11,7 +11,7 @@ final class ProgressionManager {
     func processDailyCheck(profile: UserProfile, modelContext: ModelContext) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let cycleStart = calendar.startOfDay(for: profile.cycleStartDate)
+        let cycleStart = calendar.startOfDay(for: profile.cycleStartDate ?? Date())
         
         // This is a simplified check since we don't have a reliable `lastWorkoutDate` 
         // in UserProfile yet, we assume the user has a streak that implies their last day.
@@ -33,7 +33,7 @@ final class ProgressionManager {
         
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let cycleStart = calendar.startOfDay(for: profile.cycleStartDate)
+        let cycleStart = calendar.startOfDay(for: profile.cycleStartDate ?? Date())
         let daysIntoCycle = (calendar.dateComponents([.day], from: cycleStart, to: today).day ?? 0) + 1
         
         if daysIntoCycle >= 30 {

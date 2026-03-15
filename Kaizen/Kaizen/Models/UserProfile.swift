@@ -11,7 +11,8 @@ final class UserProfile {
     var currentSwordTier: SwordTier
     var currentStreak: Int
     var freezesRemaining: Int
-    var cycleStartDate: Date
+    var cycleStartDate: Date?
+    var lastActivityDate: Date?
     var premiumStatus: Bool
     
     // Relationships
@@ -23,7 +24,8 @@ final class UserProfile {
          currentSwordTier: SwordTier = .wooden,
          currentStreak: Int = 0,
          freezesRemaining: Int = 8,
-         cycleStartDate: Date = Date(),
+         cycleStartDate: Date? = Date(),
+         lastActivityDate: Date? = Date(),
          premiumStatus: Bool = false) {
         
         self.baselinePushups = baselinePushups
@@ -33,6 +35,7 @@ final class UserProfile {
         self.currentStreak = currentStreak
         self.freezesRemaining = freezesRemaining
         self.cycleStartDate = cycleStartDate
+        self.lastActivityDate = lastActivityDate
         self.premiumStatus = premiumStatus
     }
 }

@@ -3,6 +3,7 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(StreakManager.self) private var streakManager
     @Query private var profiles: [UserProfile]
     @Query(sort: \ExerciseSession.date, order: .reverse) private var sessions: [ExerciseSession]
     
@@ -17,8 +18,15 @@ struct HomeView: View {
     }
     
     private let mockTargets = MockDataProvider.mockTargets
-    private let mockStreak = MockDataProvider.mockStreak
     private let weekday = Date().formatted(.dateTime.weekday(.wide))
+    
+    private var currentStreak: Int {
+        profile?.currentStreak ?? 0
+    }
+    
+    private var freezesRemaining: Int {
+        profile?.freezesRemaining ?? 8
+    }
     
     private var ritualStatus: RitualDotStatus {
         let completed = mockTargets.filter { $0.current >= $0.goal }.count
@@ -58,7 +66,7 @@ struct HomeView: View {
                             .tracking(1)
                         
                         HStack(alignment: .bottom, spacing: 10) {
-                            FlipClockHero(value: mockStreak)
+                            FlipClockHero(value: currentStreak)
                             
                             RitualDot(status: ritualStatus)
                                 .padding(.bottom, 12)
@@ -89,16 +97,19 @@ struct HomeView: View {
         }
         .onAppear {
             ensureProfileExists()
+            if let profile = profile {
+                streakManager.validateDailyStreak(profile: profile)
+            }
         }
     }
     
     // MARK: - Freeze Row
     private var freezeRow: some View {
         HStack(spacing: 8) {
-            ForEach(0..<8) { index in
-                Image(systemName: "heart.fill")
+            ForEach(0..<8, id: \.self) { index in
+                Image(systemName: index < freezesRemaining ? "heart.fill" : "heart")
                     .font(.system(size: 12))
-                    .foregroundColor(.red)
+                    .foregroundColor(index < freezesRemaining ? .red : .kaizenGray.opacity(0.3))
                     .offset(heartOffsets[index])
                     .gesture(
                         DragGesture()
