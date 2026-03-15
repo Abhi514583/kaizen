@@ -4,6 +4,7 @@ import SwiftData
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(StreakManager.self) private var streakManager
+    @Environment(ProgressManager.self) private var progressManager
     @Query private var profiles: [UserProfile]
     @Query(sort: \ExerciseSession.date, order: .reverse) private var sessions: [ExerciseSession]
     
@@ -51,8 +52,8 @@ struct HomeView: View {
                 // MARK: - Master Identity Header
                 KaizenHeader(
                     isHome: true,
-                    tier: "Wooden",
-                    aura: "Muted",
+                    tier: profile?.currentSwordTier.rawValue.capitalized ?? "Wooden",
+                    aura: "Not Started",
                     onSettingsTap: { path.append(.settings) }
                 )
                 .padding(.top, 10)
@@ -99,6 +100,7 @@ struct HomeView: View {
             ensureProfileExists()
             if let profile = profile {
                 streakManager.validateDailyStreak(profile: profile)
+                progressManager.checkCycleCompletion(profile: profile)
             }
         }
     }

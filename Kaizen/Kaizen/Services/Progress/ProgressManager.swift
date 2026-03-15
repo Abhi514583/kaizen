@@ -26,7 +26,40 @@ final class ProgressManager {
     /// Checks if a 30-day cycle has concluded and handles tiering.
     /// Replaces ProgressionManager.advanceCycle / handleDemotion
     func checkCycleCompletion(profile: UserProfile) {
-        // TODO: Tier upgrade logic and cycle reset
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let cycleStart = calendar.startOfDay(for: profile.cycleStartDate ?? Date())
+        
+        guard let daysSinceReset = calendar.dateComponents([.day], from: cycleStart, to: today).day else {
+            return
+        }
+        
+        if daysSinceReset >= 30 {
+            // Upgrade Tier
+            if let nextTier = profile.currentSwordTier.next {
+                profile.currentSwordTier = nextTier
+                HapticManager.shared.playSwordTierUnlock()
+            }
+            
+            // Reset Cycle
+            profile.cycleStartDate = today
+            profile.freezesRemaining = 8
+            
+            try? modelContext?.save()
+        }
+    }
+    
+    /// Called when the user runs out of freezes and breaks their streak
+    func handleDemotion(profile: UserProfile) {
+        if let previousTier = profile.currentSwordTier.previous {
+            profile.currentSwordTier = previousTier
+        }
+        
+        // Reset Cycle either way
+        profile.cycleStartDate = Date()
+        profile.freezesRemaining = 8
+        
+        try? modelContext?.save()
     }
     
     /// Real-time improvement calculation for UI.

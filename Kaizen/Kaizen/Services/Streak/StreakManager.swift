@@ -12,6 +12,7 @@ import Observation
 @MainActor
 final class StreakManager {
     private var modelContext: ModelContext?
+    var progressManager: ProgressManager?
     
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
@@ -21,13 +22,15 @@ final class StreakManager {
         self.modelContext = context
     }
     
+    func setProgressManager(_ manager: ProgressManager) {
+        self.progressManager = manager
+    }
+    
     // MARK: - Streak Logic
     
     /// Checks for missed days and updates streak/freezes accordingly.
     /// Replaces ProgressionManager.processDailyCheck
     func validateDailyStreak(profile: UserProfile) {
-        checkCycleReset(profile: profile)
-        
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let lastActivity = calendar.startOfDay(for: profile.lastActivityDate ?? Date())
@@ -51,6 +54,7 @@ final class StreakManager {
                     consumeFreeze(profile: profile, on: missedDate)
                 } else {
                     breakStreak(profile: profile)
+                    progressManager?.handleDemotion(profile: profile)
                     break
                 }
             }
@@ -99,22 +103,5 @@ final class StreakManager {
     
     private func breakStreak(profile: UserProfile) {
         profile.currentStreak = 0
-    }
-    
-    private func checkCycleReset(profile: UserProfile) {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        let cycleStart = calendar.startOfDay(for: profile.cycleStartDate ?? Date())
-        
-        guard let daysSinceReset = calendar.dateComponents([.day], from: cycleStart, to: today).day else {
-            return
-        }
-        
-        // Reset every 30 days
-        if daysSinceReset >= 30 {
-            profile.freezesRemaining = 8
-            profile.cycleStartDate = today
-            try? modelContext?.save()
-        }
     }
 }
