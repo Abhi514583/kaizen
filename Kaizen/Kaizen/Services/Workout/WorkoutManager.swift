@@ -44,11 +44,13 @@ final class WorkoutManager {
     
     // MARK: - Session Lifecycle
     
+    /// Initiates a new workout session for a given exercise type
     func startWorkout(type: ExerciseType, goal: Int) {
-        activeSession = ExerciseSession(
+        let newSession = ExerciseSession(
             exerciseType: type,
             targetForThatDay: goal
         )
+        activeSession = newSession
         currentReps = 0
         currentDuration = 0
         isPaused = false

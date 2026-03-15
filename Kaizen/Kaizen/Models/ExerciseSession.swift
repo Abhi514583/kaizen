@@ -11,7 +11,12 @@ enum ExerciseType: String, Codable, CaseIterable {
 final class ExerciseSession {
     @Attribute(.unique) var id: UUID
     var date: Date
-    var exerciseType: ExerciseType
+    var exerciseTypeRaw: String
+    
+    var exerciseType: ExerciseType {
+        get { return ExerciseType(rawValue: exerciseTypeRaw) ?? .pushups }
+        set { exerciseTypeRaw = newValue.rawValue }
+    }
     var repsOrDuration: Int
     var targetForThatDay: Int
     var completed: Bool
@@ -27,7 +32,7 @@ final class ExerciseSession {
         
         self.id = id
         self.date = date
-        self.exerciseType = exerciseType
+        self.exerciseTypeRaw = exerciseType.rawValue
         self.repsOrDuration = repsOrDuration
         self.targetForThatDay = targetForThatDay
         self.completed = completed

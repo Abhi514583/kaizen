@@ -3,8 +3,13 @@ import SwiftUI
 struct WorkoutSetupView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(WorkoutManager.self) private var workoutManager
+    @Environment(ProgressManager.self) private var progressManager
     @Binding var path: [KaizenRoute]
     let exerciseType: ExerciseType
+    
+    private var dailyTarget: Int {
+        progressManager.calculateDailyTarget(for: exerciseType)
+    }
     
     var body: some View {
         ZStack {
@@ -38,9 +43,13 @@ struct WorkoutSetupView: View {
                         .font(.kaizenBody)
                         .foregroundColor(.kaizenSage)
                     
+                    Text("Target: \(dailyTarget) \(exerciseType == .plank ? "seconds" : "reps")")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.kaizenGray)
+                    
                     Button(action: {
                         HapticManager.shared.playWorkoutStart()
-                        workoutManager.startWorkout(type: exerciseType, goal: 50) // Default goal for now
+                        workoutManager.startWorkout(type: exerciseType, goal: dailyTarget)
                         path.append(.activeWorkout(exerciseType))
                     }) {
                         Text("Start")

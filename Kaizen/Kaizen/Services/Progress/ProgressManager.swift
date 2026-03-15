@@ -62,13 +62,29 @@ final class ProgressManager {
         try? modelContext?.save()
     }
     
-    /// Real-time improvement calculation for UI.
-    func calculateImprovement(for type: ExerciseType) -> Double {
-        // TODO: Logic to compare latest session with baseline
-        return 0.0
+    /// Calculates the next daily target by finding the last completed session target and adding min(+1) or 1%.
+    func calculateDailyTarget(for type: ExerciseType) -> Int {
+        guard let context = modelContext else { return type == .plank ? 10 : 1 }
+        
+        let descriptor = FetchDescriptor<ExerciseSession>(
+            predicate: #Predicate<ExerciseSession> { $0.exerciseTypeRaw == type.rawValue && $0.completed == true },
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        
+        guard let latestSession = try? context.fetch(descriptor).first else {
+            // Starter baselines if they have never successfully tracked this exercise
+            return type == .plank ? 10 : 1
+        }
+        
+        let oldTarget = latestSession.targetForThatDay
+        
+        // 1% rule: Either jump by 1% or a minimum of 1 rep to ensure constant progress
+        let increment = max(1, Int(Double(oldTarget) * 0.01))
+        
+        return oldTarget + increment
     }
     
     func updateBaselines(profile: UserProfile) {
-        // TODO: Update UserProfile with latest baseline averages
+        // TODO: Update UserProfile with latest baseline averages for long-term charts
     }
 }

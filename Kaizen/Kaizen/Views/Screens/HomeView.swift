@@ -27,9 +27,9 @@ struct HomeView: View {
     
     private var realTargets: [ExerciseTarget] {
         [
-            ExerciseTarget(name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: 30, color: .kaizenSage),
-            ExerciseTarget(name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: 50, color: .kaizenWood),
-            ExerciseTarget(name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: 60, color: .kaizenGray)
+            ExerciseTarget(name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .pushups), color: .kaizenSage),
+            ExerciseTarget(name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .squats), color: .kaizenWood),
+            ExerciseTarget(name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank), color: .kaizenGray)
         ]
     }
     
