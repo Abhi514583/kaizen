@@ -11,7 +11,7 @@ enum ExerciseType: String, Codable, CaseIterable {
 final class ExerciseSession {
     @Attribute(.unique) var id: UUID
     var date: Date
-    var exerciseTypeRaw: String
+    var exerciseTypeRaw: String = "Pushups"
     
     var exerciseType: ExerciseType {
         get { return ExerciseType(rawValue: exerciseTypeRaw) ?? .pushups }
