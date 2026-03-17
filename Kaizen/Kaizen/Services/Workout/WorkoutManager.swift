@@ -8,7 +8,6 @@ import SwiftData
 /// - Track active reps and duration
 /// - Save finished sessions to SwiftData
 /// - Trigger DailySummary aggregation
-/// - Bridge VisionManager callbacks into session state
 @Observable
 @MainActor
 final class WorkoutManager {
@@ -17,19 +16,15 @@ final class WorkoutManager {
     var currentReps: Int = 0
     var currentDuration: TimeInterval = 0
     var isPaused: Bool = false
-    var inactivitySecondsRemaining: Int = 0
-    var isInactivityCountingDown: Bool = false
 
-    // MARK: - Internal Timers
+    // MARK: - Internal Timer
     private var timer: Timer?
-    private var inactivityTimer: Timer?
-    private let inactivityTimeout: TimeInterval = 10.0
 
-    // MARK: - Services
+    // MARK: - Initialization
+    // We will use an environment-injected ModelContext
     var modelContext: ModelContext?
     var streakManager: StreakManager?
     var progressManager: ProgressManager?
-    var visionManager: VisionManager?
 
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
@@ -47,25 +42,11 @@ final class WorkoutManager {
         self.progressManager = manager
     }
 
-    func setVisionManager(_ manager: VisionManager) {
-        self.visionManager = manager
-        manager.onRepCounted = { [weak self] _ in
-            Task { @MainActor [weak self] in self?.onRepDetected() }
-        }
-        manager.onPlankAlignmentChanged = { [weak self] isAligned in
-            Task { @MainActor [weak self] in self?.onPlankAlignmentChanged(isAligned) }
-        }
-        manager.onSessionShouldEnd = { [weak self] in
-            Task { @MainActor [weak self] in self?.completeWorkout() }
-        }
-    }
-
     // MARK: - Session Lifecycle
 
     /// Initiates a new workout session for a given exercise type
     func startWorkout(type: ExerciseType, goal: Int) {
         stopTimer()
-        stopInactivityTimer()
         let newSession = ExerciseSession(
             exerciseType: type,
             targetForThatDay: goal
@@ -74,18 +55,9 @@ final class WorkoutManager {
         currentReps = 0
         currentDuration = 0
         isPaused = false
-        inactivitySecondsRemaining = 0
-        isInactivityCountingDown = false
-
-        // Start Vision tracking
-        visionManager?.startExercise(type)
 
         if type == .plank {
-            // Plank timer driven by alignment, not a simple repeating timer
-            // It starts when alignment is confirmed via onPlankAlignmentChanged
-        } else {
-            // For rep-based exercises, start inactivity guard
-            resetInactivityTimer()
+            startTimer()
         }
     }
 
@@ -93,17 +65,10 @@ final class WorkoutManager {
         isPaused.toggle()
         if isPaused {
             stopTimer()
-            stopInactivityTimer()
-        } else {
-            if activeSession?.exerciseType == .plank && plankShouldTime {
-                startTimer()
-            } else {
-                resetInactivityTimer()
-            }
+        } else if activeSession?.exerciseType == .plank {
+            startTimer()
         }
     }
-
-    private var plankShouldTime: Bool { visionManager?.plankIsAligned ?? false }
 
     func updateReps(count: Int) {
         guard !isPaused else { return }
@@ -114,65 +79,16 @@ final class WorkoutManager {
     func addManualReps(_ count: Int) {
         guard !isPaused else { return }
         currentReps += count
-        resetInactivityTimer() // tapping manual keeps session alive
     }
 
     /// Manual increment for duration testing.
     func addManualDuration(_ seconds: TimeInterval) {
         guard !isPaused else { return }
         currentDuration += seconds
-        // Plank duration is alignment-driven, no inactivity timer needed
-    }
-
-    // MARK: - Vision Callbacks
-
-    func onRepDetected() {
-        guard !isPaused, activeSession != nil else { return }
-        currentReps += 1
-        resetInactivityTimer()
-    }
-
-    func onPlankAlignmentChanged(_ isAligned: Bool) {
-        guard activeSession?.exerciseType == .plank, !isPaused else { return }
-        if isAligned {
-            startTimer()
-        } else {
-            stopTimer()
-        }
-    }
-
-    // MARK: - Inactivity Timer
-
-    private func resetInactivityTimer() {
-        stopInactivityTimer()
-        inactivitySecondsRemaining = Int(inactivityTimeout)
-        isInactivityCountingDown = false
-
-        inactivityTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.inactivitySecondsRemaining -= 1
-                if self.inactivitySecondsRemaining <= 3 {
-                    self.isInactivityCountingDown = true
-                }
-                if self.inactivitySecondsRemaining <= 0 {
-                    self.stopInactivityTimer()
-                    self.completeWorkout()
-                }
-            }
-        }
-    }
-
-    private func stopInactivityTimer() {
-        inactivityTimer?.invalidate()
-        inactivityTimer = nil
-        isInactivityCountingDown = false
     }
 
     func completeWorkout() {
         stopTimer()
-        stopInactivityTimer()
-        visionManager?.stopExercise()
         guard let session = activeSession else { return }
 
         let sessionDate = Date()
@@ -241,13 +157,10 @@ final class WorkoutManager {
 
     func cancelWorkout() {
         stopTimer()
-        stopInactivityTimer()
-        visionManager?.stopExercise()
         activeSession = nil
         currentReps = 0
         currentDuration = 0
         isPaused = false
-        isInactivityCountingDown = false
     }
 
     // MARK: - Timer Helpers
