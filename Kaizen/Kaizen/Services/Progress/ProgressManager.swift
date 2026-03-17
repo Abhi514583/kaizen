@@ -62,18 +62,23 @@ final class ProgressManager {
         try? modelContext?.save()
     }
     
-    /// Calculates the next daily target by finding the last completed session target and adding min(+1) or 1%.
-    func calculateDailyTarget(for type: ExerciseType) -> Int {
+    /// Calculates a stable target for a given date using the last completed session
+    /// before that day. This prevents the target from increasing mid-day after a save.
+    func calculateDailyTarget(for type: ExerciseType, on date: Date = Date(), profile: UserProfile? = nil) -> Int {
         guard let context = modelContext else { return type == .plank ? 10 : 1 }
+        let startOfDay = Calendar.current.startOfDay(for: date)
         
         let descriptor = FetchDescriptor<ExerciseSession>(
-            predicate: #Predicate<ExerciseSession> { $0.exerciseTypeRaw == type.rawValue && $0.completed == true },
+            predicate: #Predicate<ExerciseSession> {
+                $0.exerciseTypeRaw == type.rawValue && $0.completed == true && $0.date < startOfDay
+            },
             sortBy: [SortDescriptor(\.date, order: .reverse)]
         )
         
         guard let latestSession = try? context.fetch(descriptor).first else {
-            // Starter baselines if they have never successfully tracked this exercise
-            return type == .plank ? 10 : 1
+            let resolvedProfile = profile ?? fetchProfile()
+            let baseline = baselineValue(for: type, profile: resolvedProfile)
+            return baseline > 0 ? baseline : defaultStartingTarget(for: type)
         }
         
         let oldTarget = latestSession.targetForThatDay
@@ -84,7 +89,45 @@ final class ProgressManager {
         return oldTarget + increment
     }
     
+    func dailyTargets(for date: Date = Date(), profile: UserProfile? = nil) -> [ExerciseType: Int] {
+        let resolvedProfile = profile ?? fetchProfile()
+        return [
+            .pushups: calculateDailyTarget(for: .pushups, on: date, profile: resolvedProfile),
+            .squats: calculateDailyTarget(for: .squats, on: date, profile: resolvedProfile),
+            .plank: calculateDailyTarget(for: .plank, on: date, profile: resolvedProfile)
+        ]
+    }
+
+    func isDailyRitualComplete(summary: DailySummary, profile: UserProfile? = nil, on date: Date = Date()) -> Bool {
+        let targets = dailyTargets(for: date, profile: profile)
+        return summary.pushupsTotal >= (targets[.pushups] ?? 0)
+            && summary.squatsTotal >= (targets[.squats] ?? 0)
+            && summary.plankTotal >= (targets[.plank] ?? 0)
+    }
+
     func updateBaselines(profile: UserProfile) {
         // TODO: Update UserProfile with latest baseline averages for long-term charts
+    }
+
+    private func fetchProfile() -> UserProfile? {
+        guard let context = modelContext else { return nil }
+        let descriptor = FetchDescriptor<UserProfile>()
+        return (try? context.fetch(descriptor))?.first
+    }
+
+    private func baselineValue(for type: ExerciseType, profile: UserProfile?) -> Int {
+        guard let profile else { return 0 }
+        switch type {
+        case .pushups:
+            return profile.baselinePushups
+        case .squats:
+            return profile.baselineSquats
+        case .plank:
+            return profile.baselinePlank
+        }
+    }
+
+    private func defaultStartingTarget(for type: ExerciseType) -> Int {
+        type == .plank ? 10 : 1
     }
 }

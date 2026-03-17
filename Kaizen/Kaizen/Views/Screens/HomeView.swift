@@ -30,9 +30,9 @@ struct HomeView: View {
     
     private var realTargets: [ExerciseTarget] {
         [
-            ExerciseTarget(id: ExerciseType.pushups.rawValue, type: .pushups, name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .pushups), color: .kaizenSage),
-            ExerciseTarget(id: ExerciseType.squats.rawValue, type: .squats, name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .squats), color: .kaizenWood),
-            ExerciseTarget(id: ExerciseType.plank.rawValue, type: .plank, name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank), color: .kaizenGray)
+            ExerciseTarget(id: ExerciseType.pushups.rawValue, type: .pushups, name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .pushups, on: Date(), profile: profile), color: .kaizenSage),
+            ExerciseTarget(id: ExerciseType.squats.rawValue, type: .squats, name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .squats, on: Date(), profile: profile), color: .kaizenWood),
+            ExerciseTarget(id: ExerciseType.plank.rawValue, type: .plank, name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank, on: Date(), profile: profile), color: .kaizenGray)
         ]
     }
     
@@ -48,6 +48,12 @@ struct HomeView: View {
     
     private var ritualStatus: RitualDotStatus {
         let targets = realTargets
+        if let todaySummary,
+           let profile,
+           progressManager.isDailyRitualComplete(summary: todaySummary, profile: profile, on: Date()) {
+            return .completed
+        }
+
         let completed = targets.filter { $0.current >= $0.goal }.count
         if completed == targets.count {
             return .completed
