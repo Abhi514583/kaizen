@@ -52,7 +52,7 @@ struct RainAtmosphere: View {
                     )
                 }
             }
-            .onChange(of: timeline.date) {
+            .onChange(of: timeline.date) { _ in
                 updateParticles(in: UIScreen.main.bounds.size)
             }
         }

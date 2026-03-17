@@ -15,7 +15,6 @@ final class CameraManager: NSObject {
     private var hasConfiguredSession = false
     private var prefersExerciseMode = false
     private var currentPosition: AVCaptureDevice.Position = .back
-    var onOrientationChanged: ((CGImagePropertyOrientation) -> Void)?
 
     /// Delegate to receive the video frames (hooked up to VisionManager)
     weak var frameDelegate: AVCaptureVideoDataOutputSampleBufferDelegate? {
@@ -132,21 +131,12 @@ final class CameraManager: NSObject {
 
     private func applyConnectionConfiguration(position: AVCaptureDevice.Position) {
         if let connection = videoOutput.connection(with: .video) {
-            if #available(iOS 17.0, *) {
-                if connection.isVideoRotationAngleSupported(90) {
-                    connection.videoRotationAngle = 90
-                }
-            } else if connection.isVideoOrientationSupported {
+            if connection.isVideoOrientationSupported {
                 connection.videoOrientation = .portrait
             }
             if connection.isVideoMirroringSupported {
                 connection.isVideoMirrored = position == .front
             }
-        }
-
-        let orientation = position == .front ? CGImagePropertyOrientation.leftMirrored : .right
-        DispatchQueue.main.async { [weak self] in
-            self?.onOrientationChanged?(orientation)
         }
     }
 

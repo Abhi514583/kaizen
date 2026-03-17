@@ -54,9 +54,6 @@ struct KaizenApp: App {
 
                     // Wire camera → vision
                     visionManager.cameraManager = cameraManager
-                    cameraManager.onOrientationChanged = { orientation in
-                        visionManager.updateCaptureOrientation(orientation)
-                    }
                     cameraManager.frameDelegate = visionManager
                     cameraManager.checkPermissionsAndSetup()
                 }
