@@ -3,7 +3,7 @@ import SwiftData
 
 // MARK: - Models
 enum RitualStatus: String, Codable {
-    case success, freeze, missed, future, inProgress
+    case success, freeze, missed, future, inProgress, startDay, empty
 }
 
 struct SessionStats: Codable {
@@ -24,6 +24,7 @@ struct RitualDay: Identifiable, Codable {
 class CalendarViewModel: ObservableObject {
     @Published var history: [RitualDay] = []
     @Published var activeMonth: Date = Date()
+    @Published var appStartDate: Date?
     
     private let calendar = Calendar.current
     
@@ -40,6 +41,20 @@ class CalendarViewModel: ObservableObject {
             var newHistory: [RitualDay] = []
             let today = calendar.startOfDay(for: Date())
             
+            let firstSessionDate = allSessions.compactMap { $0.date }.min()
+            let firstSummaryDate = summaries.compactMap { $0.date }.min()
+            
+            var earliestDate: Date? = nil
+            if let d1 = firstSessionDate, let d2 = firstSummaryDate {
+                earliestDate = calendar.startOfDay(for: min(d1, d2))
+            } else if let d = firstSessionDate ?? firstSummaryDate {
+                earliestDate = calendar.startOfDay(for: d)
+            }
+            
+            DispatchQueue.main.async {
+                self.appStartDate = earliestDate
+            }
+            
             for summary in summaries {
                 let startOfDay = calendar.startOfDay(for: summary.date)
                 let daySessions = allSessions.filter { calendar.isDate($0.date, inSameDayAs: startOfDay) }
@@ -53,7 +68,9 @@ class CalendarViewModel: ObservableObject {
                 let plankMax = plankSessions.map { $0.repsOrDuration }.max() ?? 0
                 
                 let status: RitualStatus
-                if summary.freezeUsed {
+                if startOfDay == earliestDate {
+                    status = .startDay
+                } else if summary.freezeUsed {
                     status = .freeze
                 } else if summary.sessionsCompleted > 0 {
                     status = .success
@@ -84,6 +101,11 @@ class CalendarViewModel: ObservableObject {
         let today = calendar.startOfDay(for: Date())
         
         if startOfDay > today { return .future }
+        
+        if let appStart = appStartDate {
+            if startOfDay < appStart { return .empty }
+            if startOfDay == appStart { return .startDay }
+        }
         
         if let existing = history.first(where: { calendar.isDate($0.date, inSameDayAs: date) }) {
             return existing.status
@@ -368,13 +390,13 @@ struct DayCell: View {
                     .frame(height: 45)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(status == .success ? successColor.opacity(0.3) : Color.clear, lineWidth: 1)
+                            .stroke(status == .success || status == .startDay ? successColor.opacity(0.3) : Color.clear, lineWidth: 1)
                     )
                 
                 VStack(spacing: 2) {
                     Text("\(Calendar.current.component(.day, from: date))")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(status == .future ? .kaizenGray.opacity(0.3) : .white)
+                        .foregroundColor(status == .future || status == .empty ? .kaizenGray.opacity(0.3) : .white)
                     
                     if status == .freeze {
                         Image(systemName: "heart.fill")
@@ -394,6 +416,8 @@ struct DayCell: View {
         case .missed: return .black
         case .future: return Color.kaizenGray.opacity(0.05)
         case .inProgress: return Color.orange.opacity(0.8)
+        case .startDay: return .blue.opacity(0.8)
+        case .empty: return .clear
         }
     }
     
@@ -466,6 +490,8 @@ struct HabitCell: View {
         case .missed: return .black
         case .future: return Color.white.opacity(0.05)
         case .inProgress: return Color.orange
+        case .startDay: return .blue
+        case .empty: return Color.white.opacity(0.02)
         }
     }
     
@@ -552,6 +578,8 @@ struct RitualManifestSheet: View {
                     if status == .success { Color.kaizenSage }
                     else if status == .freeze { Color.red }
                     else if status == .inProgress { Color.orange }
+                    else if status == .startDay { Color.blue }
+                    else if status == .empty { Color.clear }
                     else { Color.black }
                 }
             )

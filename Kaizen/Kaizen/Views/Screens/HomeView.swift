@@ -183,9 +183,14 @@ struct HomeView: View {
     private var bottomNavBar: some View {
         HStack {
             Button(action: { path.append(.improvement) }) {
-                Text("Improvement")
-                    .font(.kaizenBody)
-                    .foregroundColor(.kaizenGray)
+                VStack(spacing: 8) {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 20, weight: .semibold))
+                    Text("PROGRESS")
+                        .font(.system(size: 10, weight: .black))
+                        .tracking(1)
+                }
+                .foregroundColor(.kaizenGray)
             }
             
             Spacer()
@@ -201,9 +206,14 @@ struct HomeView: View {
             Spacer()
             
             Button(action: { path.append(.calendar(profile?.currentSwordTier.rawValue ?? "Wooden")) }) {
-                Text("Calendar")
-                    .font(.kaizenBody)
-                    .foregroundColor(.kaizenGray)
+                VStack(spacing: 8) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 20, weight: .semibold))
+                    Text("CALENDAR")
+                        .font(.system(size: 10, weight: .black))
+                        .tracking(1)
+                }
+                .foregroundColor(.kaizenGray)
             }
         }
         .padding(.horizontal, 40)

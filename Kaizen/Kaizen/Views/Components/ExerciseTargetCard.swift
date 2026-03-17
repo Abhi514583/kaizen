@@ -44,10 +44,10 @@ struct ExerciseTargetCard: View {
                 
                 // Progress Label
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
-                    Text("\(target.current)")
+                    Text("\(target.current)\(target.type == .plank ? "s" : "")")
                         .font(.system(size: 16, weight: .black, design: .rounded))
                         .foregroundColor(.white)
-                    Text("/\(target.goal)")
+                    Text("/\(target.goal)\(target.type == .plank ? "s" : "")")
                         .font(.system(size: 10, weight: .bold, design: .rounded))
                         .foregroundColor(.kaizenGray)
                 }
