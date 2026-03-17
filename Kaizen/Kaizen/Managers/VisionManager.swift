@@ -46,6 +46,7 @@ final class VisionManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
     var activeExercise: ExerciseType? = nil
     var frameSize: CGSize = .zero
     weak var cameraManager: CameraManager?
+    nonisolated(unsafe) private var captureOrientation: CGImagePropertyOrientation = .right
 
     // MARK: - Callbacks (bound by WorkoutManager)
     var onRepCounted: ((Int) -> Void)?
@@ -79,8 +80,7 @@ final class VisionManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
 
         let request = VNDetectHumanBodyPoseRequest()
-        let orientation = cameraManager?.visionOrientation ?? .right
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation, options: [:])
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: captureOrientation, options: [:])
 
         do {
             try handler.perform([request])
@@ -439,5 +439,9 @@ final class VisionManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegat
         positioningState = .notReady(reason: "")
         plankIsAligned = false
         plankBreakStartTime = nil
+    }
+
+    func updateCaptureOrientation(_ orientation: CGImagePropertyOrientation) {
+        captureOrientation = orientation
     }
 }

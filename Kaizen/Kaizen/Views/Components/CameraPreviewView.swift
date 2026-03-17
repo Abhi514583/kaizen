@@ -19,7 +19,11 @@ struct CameraPreviewView: UIViewRepresentable {
         uiView.videoPreviewLayer.videoGravity = videoGravity
 
         if let connection = uiView.videoPreviewLayer.connection {
-            if connection.isVideoOrientationSupported {
+            if #available(iOS 17.0, *) {
+                if connection.isVideoRotationAngleSupported(90) {
+                    connection.videoRotationAngle = 90
+                }
+            } else if connection.isVideoOrientationSupported {
                 connection.videoOrientation = .portrait
             }
             if connection.isVideoMirroringSupported {
