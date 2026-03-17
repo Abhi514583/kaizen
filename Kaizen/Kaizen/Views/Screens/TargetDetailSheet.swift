@@ -33,10 +33,14 @@ struct TargetDetailSheet: View {
     
     var body: some View {
         ZStack {
-            Color.kaizenShadow.ignoresSafeArea()
+            LinearGradient(
+                colors: [Color.kaizenShadow, Color(red: 0.12, green: 0.14, blue: 0.13)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
             
             VStack(alignment: .leading, spacing: 32) {
-                // Header
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(target.name.uppercased())
@@ -50,16 +54,15 @@ struct TargetDetailSheet: View {
                     Spacer()
                     
                     ZStack {
-                        Circle()
-                            .fill(target.color.opacity(0.1))
-                            .frame(width: 48, height: 48)
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .fill(target.color.opacity(0.14))
+                            .frame(width: 56, height: 56)
                         Image(systemName: iconName)
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(target.color)
                     }
                 }
                 
-                // Stats
                 HStack(spacing: 40) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("TODAY'S GOAL")
@@ -84,12 +87,10 @@ struct TargetDetailSheet: View {
                 
                 Spacer()
                 
-                // Start Button
                 Button(action: {
                     HapticManager.shared.playWorkoutStart()
                     dismiss()
                     
-                    // Allow UI to dismiss, then jump to workout
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         workoutManager.startWorkout(type: type, goal: target.goal)
                         path.append(.activeWorkout(type))
@@ -106,13 +107,17 @@ struct TargetDetailSheet: View {
                     .foregroundColor(.kaizenShadow)
                     .frame(maxWidth: .infinity)
                     .frame(height: 60)
-                    .background(target.color)
-                    .cornerRadius(16)
-                    .shadow(color: target.color.opacity(0.3), radius: 15, x: 0, y: 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(target.color)
+                    )
+                    .shadow(color: target.color.opacity(0.24), radius: 18, x: 0, y: 12)
                 }
                 .padding(.bottom, 10)
             }
             .padding(30)
+            .kaizenGlassCard(cornerRadius: 32, tint: target.color.opacity(0.08))
+            .padding(18)
         }
     }
     

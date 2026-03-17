@@ -13,10 +13,9 @@ struct HomeView: View {
     @Binding var path: [KaizenRoute]
 
     @State private var isMenuExpanded = false
-    @State private var auraOffset = CGSize.zero
-    @State private var heartOffsets: [CGSize] = Array(repeating: .zero, count: 8)
-
     @State private var selectedTarget: ExerciseTarget? = nil
+    @State private var animateHearts = false
+    @State private var revealHero = false
 
     private var profile: UserProfile? {
         profiles.first
@@ -35,8 +34,6 @@ struct HomeView: View {
             ExerciseTarget(id: ExerciseType.plank.rawValue, type: .plank, name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank, on: Date(), profile: profile), color: .kaizenGray)
         ]
     }
-
-    private let weekday = Date().formatted(.dateTime.weekday(.wide))
 
     private var currentStreak: Int {
         profile?.currentStreak ?? 0
@@ -64,58 +61,71 @@ struct HomeView: View {
         }
     }
 
+    private var ritualCompletionRatio: Double {
+        let totals = realTargets.reduce(0.0) { partial, target in
+            guard target.goal > 0 else { return partial }
+            return partial + min(Double(target.current) / Double(target.goal), 1.0)
+        }
+
+        return totals / Double(max(realTargets.count, 1))
+    }
+
+    private var ritualStatusCopy: String {
+        switch ritualStatus {
+        case .completed:
+            return "Daily ritual complete"
+        case .inProgress:
+            return "Momentum is building"
+        case .notStarted:
+            return "Ready to begin"
+        }
+    }
+
     var body: some View {
         ZStack {
-            Color.kaizenShadow.ignoresSafeArea()
+            LinearGradient(
+                colors: [
+                    Color(red: 0.10, green: 0.11, blue: 0.11),
+                    Color(red: 0.14, green: 0.16, blue: 0.15),
+                    Color(red: 0.07, green: 0.08, blue: 0.08)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            // MARK: - Atmospheric Layer
             RainAtmosphere()
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // MARK: - Master Identity Header
-                KaizenHeader(
-                    isHome: true,
-                    tier: profile?.currentSwordTier.rawValue.capitalized ?? "Wooden",
-                    aura: profile?.progress?.auraState.rawValue.capitalized ?? "None",
-                    onSettingsTap: { path.append(.settings) }
-                )
-                .padding(.top, 10)
+            Circle()
+                .fill(Color.kaizenMint.opacity(0.14))
+                .frame(width: 320, height: 320)
+                .blur(radius: 90)
+                .offset(x: 60, y: 240)
 
-                // MARK: - Streak Section
-                HStack(alignment: .bottom) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("DAY")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundColor(.kaizenGray)
-                            .tracking(1)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 24) {
+                    KaizenHeader(
+                        isHome: true,
+                        tier: profile?.currentSwordTier.rawValue.capitalized ?? "Wooden",
+                        aura: profile?.progress?.auraState.rawValue.capitalized ?? "None",
+                        onSettingsTap: { path.append(.settings) }
+                    )
+                    .padding(.top, 10)
 
-                        HStack(alignment: .bottom, spacing: 10) {
-                            FlipClockHero(value: currentStreak)
+                    heroSection
+                        .scaleEffect(revealHero ? 1.0 : 0.96)
+                        .opacity(revealHero ? 1.0 : 0.0)
 
-                            RitualDot(status: ritualStatus)
-                                .padding(.bottom, 12)
-                        }
+                    targetsSection
 
-                        freezeRow
-                            .padding(.top, 8)
-                            .padding(.leading, -16) // Reset alignment relative to the VStack
-                    }
-                    Spacer()
+                    bottomNavBar
+                        .padding(.top, 8)
+                        .padding(.bottom, UIConstants.Spacing.lg)
                 }
-                .padding(.horizontal, UIConstants.Spacing.lg)
-                .padding(.top, 24)
-
-                Spacer()
-
-                // MARK: - Today's Ritual Targets
-                targetsSection
-
-                Spacer()
-
-                // MARK: - Bottom Navigation
-                bottomNavBar
+                .padding(.top, 6)
             }
+
             if isMenuExpanded {
                 menuOverlay
             }
@@ -126,6 +136,11 @@ struct HomeView: View {
                 streakManager.validateDailyStreak(profile: profile)
                 progressManager.checkCycleCompletion(profile: profile)
             }
+
+            animateHearts = true
+            withAnimation(.spring(response: 0.72, dampingFraction: 0.84)) {
+                revealHero = true
+            }
         }
         .sheet(item: $selectedTarget) { target in
             TargetDetailSheet(target: target, type: target.type, workoutManager: workoutManager, path: $path)
@@ -134,41 +149,133 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Freeze Row
+    private var heroSection: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(Date().formatted(.dateTime.weekday(.wide)).uppercased())
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.kaizenFog.opacity(0.62))
+                        .tracking(2)
+
+                    HStack(alignment: .lastTextBaseline, spacing: 12) {
+                        FlipClockHero(value: currentStreak)
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("DAY STREAK")
+                                .font(.system(size: 11, weight: .black))
+                                .foregroundColor(.kaizenCloud)
+                                .tracking(2)
+
+                            HStack(spacing: 10) {
+                                RitualDot(status: ritualStatus)
+                                Text(ritualStatusCopy)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.kaizenFog.opacity(0.78))
+                            }
+                        }
+                        .padding(.bottom, 12)
+                    }
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 8) {
+                    Text("\(Int(ritualCompletionRatio * 100))%")
+                        .font(.system(size: 30, weight: .black, design: .rounded))
+                        .foregroundColor(.kaizenMint)
+                        .contentTransition(.numericText())
+
+                    Text("TODAY")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.kaizenFog.opacity(0.56))
+                        .tracking(1.8)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .kaizenFloatingCapsule(tint: Color.kaizenMint.opacity(0.10))
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("FREEZE HEARTS")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.kaizenFog.opacity(0.56))
+                        .tracking(1.8)
+                    Spacer()
+                    Text("\(freezesRemaining) / 8")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.kaizenCloud)
+                }
+
+                freezeRow
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text("RITUAL FLOW")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.kaizenFog.opacity(0.56))
+                        .tracking(1.8)
+                    Spacer()
+                    Text("\(realTargets.filter { $0.current > 0 }.count) / \(realTargets.count) active")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.kaizenCloud)
+                }
+
+                GeometryReader { proxy in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.05))
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.kaizenMint, Color.kaizenSage],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .frame(width: max(20, proxy.size.width * ritualCompletionRatio))
+                            .shadow(color: Color.kaizenMint.opacity(0.18), radius: 12, x: 0, y: 0)
+                    }
+                }
+                .frame(height: 8)
+            }
+        }
+        .padding(22)
+        .kaizenGlassCard(cornerRadius: 34, tint: Color.kaizenMint.opacity(0.08))
+        .padding(.horizontal, UIConstants.Spacing.lg)
+    }
+
     private var freezeRow: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             ForEach(0..<8, id: \.self) { index in
                 Image(systemName: index < freezesRemaining ? "heart.fill" : "heart")
-                    .font(.system(size: 12))
-                    .foregroundColor(index < freezesRemaining ? .red : .kaizenGray.opacity(0.3))
-                    .offset(heartOffsets[index])
-                    .gesture(
-                        DragGesture()
-                            .onChanged { value in
-                                heartOffsets[index] = value.translation
-                            }
-                            .onEnded { _ in
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                                    heartOffsets[index] = .zero
-                                }
-                            }
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(index < freezesRemaining ? .kaizenEmber : .kaizenFog.opacity(0.26))
+                    .frame(width: 28, height: 28)
+                    .background(
+                        Circle()
+                            .fill(index < freezesRemaining ? Color.kaizenEmber.opacity(0.12) : Color.white.opacity(0.03))
+                    )
+                    .scaleEffect(index < freezesRemaining && animateHearts ? 1.08 : 0.96)
+                    .animation(
+                        index < freezesRemaining
+                        ? .easeInOut(duration: 0.95).repeatForever(autoreverses: true).delay(Double(index) * 0.08)
+                        : .default,
+                        value: animateHearts
                     )
             }
             Spacer()
         }
     }
 
-    // MARK: - Aura Element (Deprecated/Moved to SwordHeroCard)
-    // Removing old heroSection and auraElement entirely as requested to clean the middle.
-
-    // MARK: - Targets Section
     private var targetsSection: some View {
         VStack(spacing: 16) {
             HStack {
                 Text("DAILY RITUAL")
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundColor(.kaizenGray)
-                    .tracking(1)
+                    .font(.system(size: 11, weight: .black))
+                    .foregroundColor(.kaizenFog.opacity(0.58))
+                    .tracking(2)
                 Spacer()
             }
             .padding(.leading, 4)
@@ -185,7 +292,6 @@ struct HomeView: View {
         .padding(.horizontal, UIConstants.Spacing.lg)
     }
 
-    // MARK: - Bottom Nav Bar
     private var bottomNavBar: some View {
         HStack {
             Button(action: { path.append(.improvement) }) {
@@ -196,18 +302,19 @@ struct HomeView: View {
                         .font(.system(size: 10, weight: .black))
                         .tracking(1)
                 }
-                .foregroundColor(.kaizenGray)
+                .foregroundColor(.kaizenFog)
+                .frame(width: 92, height: 72)
+                .kaizenFloatingCapsule(tint: Color.white.opacity(0.06))
             }
 
             Spacer()
 
-            // Central Plus Button
             KaizenPlusButton(isExpanded: isMenuExpanded) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                     isMenuExpanded.toggle()
                 }
             }
-            .offset(y: -20)
+            .offset(y: -12)
 
             Spacer()
 
@@ -219,17 +326,16 @@ struct HomeView: View {
                         .font(.system(size: 10, weight: .black))
                         .tracking(1)
                 }
-                .foregroundColor(.kaizenGray)
+                .foregroundColor(.kaizenFog)
+                .frame(width: 92, height: 72)
+                .kaizenFloatingCapsule(tint: Color.white.opacity(0.06))
             }
         }
-        .padding(.horizontal, 40)
-        .padding(.bottom, UIConstants.Spacing.lg)
+        .padding(.horizontal, 32)
     }
 
-    // MARK: - Expanding Menu Overlay
     private var menuOverlay: some View {
         ZStack {
-            // Blurred Background - Tapping anywhere dismisses
             Rectangle()
                 .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
@@ -240,7 +346,6 @@ struct HomeView: View {
             VStack(spacing: 20) {
                 Spacer()
 
-                // Exercise Options - Staggered "Pop"
                 if isMenuExpanded {
                     VStack(spacing: 16) {
                         menuItem(title: "Pushups", pr: bestLabel(for: .pushups), icon: "figure.pushups", delay: 0.1) {
@@ -261,14 +366,13 @@ struct HomeView: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                // Close / Large Plus Button
                 Button(action: {
                     closeMenu()
                 }) {
                     ZStack {
-                        Circle()
-                            .fill(Color.kaizenWhite)
-                            .frame(width: 70, height: 70)
+                        RoundedRectangle(cornerRadius: 26, style: .continuous)
+                            .fill(Color.kaizenCloud)
+                            .frame(width: 78, height: 78)
 
                         Image(systemName: "plus")
                             .font(.system(size: 30, weight: .bold))
@@ -305,17 +409,13 @@ struct HomeView: View {
             .foregroundColor(.kaizenWhite)
             .padding(.vertical, 12)
             .padding(.horizontal, 24)
-            .background(
-                Capsule()
-                    .fill(Color.kaizenShadow.opacity(0.9))
-            )
+            .kaizenFloatingCapsule(tint: Color.white.opacity(0.08))
         }
         .scaleEffect(isMenuExpanded ? 1.0 : 0.8)
         .opacity(isMenuExpanded ? 1.0 : 0.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.7).delay(delay), value: isMenuExpanded)
     }
 
-    // MARK: - Helper Methods
     private func closeMenu() {
         HapticManager.shared.playWorkoutStart()
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -348,25 +448,5 @@ struct HomeView: View {
             modelContext.insert(newProfile)
             try? modelContext.save()
         }
-    }
-}
-
-// Supporting Models for Preview/Mock
-
-
-// Helper for rounded corners on specific sides
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(roundedRect: rect, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius))
-        return Path(path.cgPath)
     }
 }

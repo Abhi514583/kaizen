@@ -10,17 +10,28 @@ struct KaizenPlusButton: View {
             action()
         }) {
             ZStack {
-                Circle()
-                    .fill(Color.kaizenSage)
-                    .frame(width: 64, height: 64)
-                    .shadow(color: Color.kaizenSage.opacity(0.4), radius: 15, x: 0, y: 0) // Core Glow
-                    .shadow(color: Color.kaizenSage.opacity(0.2), radius: 30, x: 0, y: 0) // Outer Glow
+                RoundedRectangle(cornerRadius: 26, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.kaizenMint, Color.kaizenSage],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 84, height: 84)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 26, style: .continuous)
+                            .stroke(Color.white.opacity(0.22), lineWidth: 1)
+                    )
+                    .shadow(color: Color.kaizenMint.opacity(0.38), radius: 24, x: 0, y: 16)
                 
                 Image(systemName: "plus")
-                    .font(.title.weight(.bold))
+                    .font(.system(size: 30, weight: .bold))
                     .foregroundColor(.kaizenShadow)
                     .rotationEffect(.degrees(isExpanded ? 45 : 0))
             }
+            .scaleEffect(isExpanded ? 1.06 : 1.0)
+            .animation(.spring(response: 0.36, dampingFraction: 0.72), value: isExpanded)
         }
     }
 }
