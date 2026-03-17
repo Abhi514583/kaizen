@@ -21,6 +21,7 @@ struct RitualDay: Identifiable, Codable {
 }
 
 // MARK: - ViewModel / Mock Generator
+@MainActor
 class CalendarViewModel: ObservableObject {
     @Published var history: [RitualDay] = []
     @Published var activeMonth: Date = Date()
@@ -51,9 +52,7 @@ class CalendarViewModel: ObservableObject {
                 earliestDate = calendar.startOfDay(for: d)
             }
 
-            DispatchQueue.main.async {
-                self.appStartDate = earliestDate
-            }
+            self.appStartDate = earliestDate
 
             for summary in summaries {
                 let startOfDay = calendar.startOfDay(for: summary.date)

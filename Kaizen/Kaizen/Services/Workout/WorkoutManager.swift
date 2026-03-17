@@ -166,8 +166,10 @@ final class WorkoutManager {
     // MARK: - Timer Helpers
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self, !self.isPaused else { return }
-            self.currentDuration += 1
+            Task { @MainActor [weak self] in
+                guard let self = self, !self.isPaused else { return }
+                self.currentDuration += 1
+            }
         }
     }
 
