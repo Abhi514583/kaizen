@@ -35,6 +35,23 @@ struct ImprovementView: View {
             HapticManager.shared.playWorkoutStart()
             dismiss()
         }
+        .overlay(alignment: .bottom) {
+            Button(action: {
+                HapticManager.shared.playWorkoutStart()
+                dismiss()
+            }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("BACK")
+                        .font(.system(size: 12, weight: .black))
+                        .tracking(2)
+                }
+            }
+            .buttonStyle(.kaizenSecondary)
+            .padding(.horizontal, 30)
+            .padding(.bottom, 30)
+        }
     }
     
     private var summaryModule: some View {

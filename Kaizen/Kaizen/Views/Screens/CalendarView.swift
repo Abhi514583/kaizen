@@ -177,15 +177,9 @@ struct CalendarView: View {
                             .font(.system(size: 12, weight: .black))
                             .tracking(2)
                     }
-                    .foregroundColor(.kaizenWhite)
-                    .frame(height: 50)
-                    .padding(.horizontal, 30)
-                    .background(Color.kaizenShadow.opacity(0.8))
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(25)
-                    .overlay(RoundedRectangle(cornerRadius: 25).stroke(Color.kaizenGray.opacity(0.2), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
                 }
+                .buttonStyle(.kaizenSecondary)
+                .padding(.horizontal, 30)
                 .padding(.bottom, 30)
             }
         }
@@ -194,6 +188,9 @@ struct CalendarView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
+        .navigationBarHidden(true)
+        .navigationBarBackButtonHidden(true)
+        .background(SwipeBackFix())
         .onAppear {
             vm.loadRealData(context: modelContext)
         }

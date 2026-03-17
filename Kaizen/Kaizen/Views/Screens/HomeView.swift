@@ -3,6 +3,7 @@ import SwiftData
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(WorkoutManager.self) private var workoutManager
     @Environment(StreakManager.self) private var streakManager
     @Environment(ProgressManager.self) private var progressManager
     @Query private var profiles: [UserProfile]
@@ -14,6 +15,8 @@ struct HomeView: View {
     @State private var isMenuExpanded = false
     @State private var auraOffset = CGSize.zero
     @State private var heartOffsets: [CGSize] = Array(repeating: .zero, count: 8)
+    
+    @State private var selectedTarget: ExerciseTarget? = nil
     
     private var profile: UserProfile? {
         profiles.first
@@ -27,9 +30,9 @@ struct HomeView: View {
     
     private var realTargets: [ExerciseTarget] {
         [
-            ExerciseTarget(name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .pushups), color: .kaizenSage),
-            ExerciseTarget(name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .squats), color: .kaizenWood),
-            ExerciseTarget(name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank), color: .kaizenGray)
+            ExerciseTarget(id: ExerciseType.pushups.rawValue, type: .pushups, name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .pushups), color: .kaizenSage),
+            ExerciseTarget(id: ExerciseType.squats.rawValue, type: .squats, name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .squats), color: .kaizenWood),
+            ExerciseTarget(id: ExerciseType.plank.rawValue, type: .plank, name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank), color: .kaizenGray)
         ]
     }
     
@@ -118,6 +121,11 @@ struct HomeView: View {
                 progressManager.checkCycleCompletion(profile: profile)
             }
         }
+        .sheet(item: $selectedTarget) { target in
+            TargetDetailSheet(target: target, type: target.type, workoutManager: workoutManager, path: $path)
+                .presentationDetents([.fraction(0.45)])
+                .presentationDragIndicator(.visible)
+        }
     }
     
     // MARK: - Freeze Row
@@ -161,7 +169,10 @@ struct HomeView: View {
             
             VStack(spacing: 12) {
                 ForEach(realTargets) { target in
-                    ExerciseTargetCard(target: target)
+                    ExerciseTargetCard(target: target) {
+                        HapticManager.shared.playWorkoutStart()
+                        selectedTarget = target
+                    }
                 }
             }
         }

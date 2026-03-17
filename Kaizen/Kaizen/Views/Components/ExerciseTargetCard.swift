@@ -1,7 +1,8 @@
 import SwiftUI
 
-struct ExerciseTarget: Identifiable {
-    let id = UUID()
+struct ExerciseTarget: Identifiable, Equatable {
+    let id: String // Use a stable string (type.rawValue)
+    let type: ExerciseType
     let name: String
     let current: Int
     let goal: Int
@@ -10,8 +11,10 @@ struct ExerciseTarget: Identifiable {
 
 struct ExerciseTargetCard: View {
     let target: ExerciseTarget
+    var action: () -> Void = {}
     
     var body: some View {
+        Button(action: action) {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top) {
                 // Icon + Name
@@ -33,6 +36,11 @@ struct ExerciseTargetCard: View {
                 }
                 
                 Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.kaizenGray.opacity(0.5))
+                    .padding(.trailing, 8)
                 
                 // Progress Label
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
@@ -59,6 +67,8 @@ struct ExerciseTargetCard: View {
             }
             .frame(height: 4)
         }
+        .contentShape(Rectangle())
+        }
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
@@ -68,6 +78,7 @@ struct ExerciseTargetCard: View {
                         .stroke(Color.white.opacity(0.05), lineWidth: 1)
                 )
         )
+        .buttonStyle(.plain) // Prevents the whole stack from being tinted
     }
     
     private var iconName: String {
@@ -84,8 +95,8 @@ struct ExerciseTargetCard: View {
     ZStack {
         Color.kaizenShadow.ignoresSafeArea()
         VStack(spacing: 16) {
-            ExerciseTargetCard(target: ExerciseTarget(name: "Pushups", current: 30, goal: 50, color: .kaizenSage))
-            ExerciseTargetCard(target: ExerciseTarget(name: "Squats", current: 80, goal: 80, color: .kaizenWood))
+            ExerciseTargetCard(target: ExerciseTarget(id: "pushups", type: .pushups, name: "Pushups", current: 30, goal: 50, color: .kaizenSage))
+            ExerciseTargetCard(target: ExerciseTarget(id: "squats", type: .squats, name: "Squats", current: 80, goal: 80, color: .kaizenWood))
         }
         .padding()
     }

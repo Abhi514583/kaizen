@@ -22,9 +22,9 @@ struct MockDataProvider {
     // MARK: - Exercise Targets
     static var mockTargets: [ExerciseTarget] {
         [
-            ExerciseTarget(name: "Pushups", current: 30, goal: 30, color: .kaizenSage),
-            ExerciseTarget(name: "Squats", current: 20, goal: 50, color: .kaizenWood),
-            ExerciseTarget(name: "Plank", current: 45, goal: 60, color: .kaizenGray)
+            ExerciseTarget(id: "pushups_mock", type: .pushups, name: "Pushups", current: 30, goal: 30, color: .kaizenSage),
+            ExerciseTarget(id: "squats_mock", type: .squats, name: "Squats", current: 20, goal: 50, color: .kaizenWood),
+            ExerciseTarget(id: "plank_mock", type: .plank, name: "Plank", current: 45, goal: 60, color: .kaizenGray)
         ]
     }
     
