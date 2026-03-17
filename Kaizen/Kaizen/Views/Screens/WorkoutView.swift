@@ -5,16 +5,42 @@ struct WorkoutView: View {
     let exerciseName: String
     let pr: String
     let goal: Int
-    
+
     @Environment(\.dismiss) private var dismiss
     @Environment(WorkoutManager.self) private var workoutManager
-    
+    @Environment(ProgressManager.self) private var progressManager
+
+    private var currentExerciseType: ExerciseType? {
+        workoutManager.activeSession?.exerciseType ?? ExerciseType(rawValue: exerciseName)
+    }
+
+    private var displayGoal: Int {
+        workoutManager.activeSession?.targetForThatDay ?? goal
+    }
+
+    private var displayGoalLabel: String {
+        guard let currentExerciseType else { return "\(displayGoal)" }
+        return currentExerciseType == .plank ? "\(displayGoal)s" : "\(displayGoal)"
+    }
+
+    private var displayPR: String {
+        guard let currentExerciseType else { return pr }
+        let best = progressManager.currentBest(for: currentExerciseType)
+        guard best > 0 else { return "NO PR" }
+
+        if currentExerciseType == .plank {
+            return String(format: "%02d:%02d PR", best / 60, best % 60)
+        }
+
+        return "\(best) PR"
+    }
+
     var body: some View {
         ZStack {
             // MARK: - Camera Placeholder Backdrop
             Color.black
                 .ignoresSafeArea()
-            
+
             // Subtle Grid/Vision Placeholder for "Anime" vibe
             Canvas { context, size in
                 let spacing: CGFloat = 40
@@ -25,7 +51,7 @@ struct WorkoutView: View {
                 }
             }
             .ignoresSafeArea()
-            
+
             VStack {
                 // MARK: - Top Stats Header
                 HStack {
@@ -34,26 +60,26 @@ struct WorkoutView: View {
                             .font(.system(size: 24, weight: .black))
                             .foregroundColor(.kaizenWhite)
                             .tracking(2)
-                        
+
                         HStack(spacing: 12) {
-                            statLabel(title: "BEST", value: pr)
-                            statLabel(title: "GOAL", value: "\(goal)")
+                            statLabel(title: "BEST", value: displayPR)
+                            statLabel(title: "GOAL", value: displayGoalLabel)
                         }
                     }
                     Spacer()
-                    
+
                     // Live Timer Placeholder
                     timerView
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
-                
+
                 Spacer()
-                
+
                 // MARK: - Central Rep/Timer Counter
                 VStack(spacing: -10) {
-                    Text(workoutManager.activeSession?.exerciseType == .plank ? 
-                         String(format: "%02d:%02d", Int(workoutManager.currentDuration) / 60, Int(workoutManager.currentDuration) % 60) : 
+                    Text(workoutManager.activeSession?.exerciseType == .plank ?
+                         String(format: "%02d:%02d", Int(workoutManager.currentDuration) / 60, Int(workoutManager.currentDuration) % 60) :
                          "\(workoutManager.currentReps)")
                         .font(.system(size: workoutManager.activeSession?.exerciseType == .plank ? 120 : 160, weight: .black, design: .rounded))
                         .foregroundColor(.kaizenWhite)
@@ -65,7 +91,7 @@ struct WorkoutView: View {
                                 HapticManager.shared.playWorkoutStart()
                             }
                         }
-                    
+
                     Text(workoutManager.activeSession?.exerciseType == .plank ? "SECONDS" : "REPS")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.kaizenSage)
@@ -75,9 +101,9 @@ struct WorkoutView: View {
                 .scaleEffect(workoutManager.isPaused ? 0.9 : 1.0)
                 .opacity(workoutManager.isPaused ? 0.5 : 1.0)
                 .animation(.spring(response: 0.4, dampingFraction: 0.6), value: workoutManager.currentReps)
-                
+
                 Spacer()
-                
+
                 // MARK: - Testing Controls (Manual Input)
                 HStack(spacing: 16) {
                     if workoutManager.activeSession?.exerciseType == .plank {
@@ -96,27 +122,27 @@ struct WorkoutView: View {
                 .opacity(workoutManager.isPaused ? 0.3 : 1.0)
                 .disabled(workoutManager.isPaused)
                 .padding(.bottom, 20)
-                
+
                 Spacer()
-                
+
                 // MARK: - Controls
                 HStack(spacing: 30) {
                     controlButton(icon: workoutManager.isPaused ? "play.fill" : "pause.fill") {
                         workoutManager.togglePause()
                         HapticManager.shared.playWorkoutStart()
                     }
-                    
+
                     controlButton(icon: "checkmark", isDestructive: false) {
-                        let finalValue = workoutManager.activeSession?.exerciseType == .plank ? 
+                        let finalValue = workoutManager.activeSession?.exerciseType == .plank ?
                             Int(workoutManager.currentDuration) : workoutManager.currentReps
-                        
+
                         workoutManager.completeWorkout()
-                        
+
                         if let exerciseType = ExerciseType(rawValue: exerciseName) {
                             path.append(.sessionComplete(exerciseType, finalValue))
                         }
                     }
-                    
+
                     controlButton(icon: "xmark", isDestructive: true) {
                         workoutManager.cancelWorkout()
                         dismiss()
@@ -127,7 +153,7 @@ struct WorkoutView: View {
         }
         .navigationBarBackButtonHidden(true)
     }
-    
+
     private func statLabel(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
@@ -138,7 +164,7 @@ struct WorkoutView: View {
                 .foregroundColor(.kaizenSage)
         }
     }
-    
+
     private var timerView: some View {
         VStack(alignment: .trailing, spacing: 0) {
             Text("SESSION TIME")
@@ -149,7 +175,7 @@ struct WorkoutView: View {
                 .foregroundColor(.kaizenWhite)
         }
     }
-    
+
     private func manualButton(label: String, action: @escaping () -> Void) -> some View {
         Button(action: {
             action()
@@ -167,14 +193,14 @@ struct WorkoutView: View {
                 )
         }
     }
-    
+
     private func controlButton(icon: String, isDestructive: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             ZStack {
                 Circle()
                     .fill(.ultraThinMaterial)
                     .frame(width: 70, height: 70)
-                
+
                 Image(systemName: icon)
                     .font(.system(size: 24, weight: .bold))
                     .foregroundColor(isDestructive ? .red : .kaizenWhite)

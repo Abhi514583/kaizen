@@ -1,17 +1,36 @@
 import SwiftUI
+import SwiftData
 
 struct ImprovementView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(ProgressManager.self) private var progressManager
+    @Query private var profiles: [UserProfile]
+    @Query(sort: \DailySummary.date, order: .reverse) private var summaries: [DailySummary]
     @State private var appearanceFactor: Double = 0
-    
+
+    private var profile: UserProfile? {
+        profiles.first
+    }
+
+    private var daysActiveLast7: Int {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        guard let sevenDaysAgo = calendar.date(byAdding: .day, value: -6, to: today) else { return 0 }
+
+        return summaries.filter { summary in
+            let day = calendar.startOfDay(for: summary.date)
+            return day >= sevenDaysAgo && day <= today && summary.sessionsCompleted > 0
+        }.count
+    }
+
     var body: some View {
         ZStack {
             Color.kaizenShadow.ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 KaizenHeader(isHome: false, onBack: { dismiss() })
                     .padding(.top, 10)
-                
+
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 32) {
                         titleHeader
@@ -53,15 +72,15 @@ struct ImprovementView: View {
             .padding(.bottom, 30)
         }
     }
-    
+
     private var summaryModule: some View {
         HStack {
             Spacer()
-            summaryItem(number: "6 / 7", label: "Days Active")
+            summaryItem(number: "\(daysActiveLast7) / 7", label: "Days Active")
             Spacer()
             Divider().background(Color.white.opacity(0.1)).frame(height: 40)
             Spacer()
-            summaryItem(number: "10", label: "Day Streak")
+            summaryItem(number: "\(profile?.currentStreak ?? 0)", label: "Day Streak")
             Spacer()
         }
         .padding(.vertical, 24)
@@ -69,7 +88,7 @@ struct ImprovementView: View {
         .cornerRadius(20)
         .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.05), lineWidth: 1))
     }
-    
+
     private func summaryItem(number: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(number)
@@ -81,7 +100,7 @@ struct ImprovementView: View {
                 .tracking(1)
         }
     }
-    
+
     // MARK: - Subviews
     private var titleHeader: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -89,13 +108,13 @@ struct ImprovementView: View {
                 Text("PROGRESS")
                     .font(.system(size: 34, weight: .black, design: .rounded))
                     .foregroundColor(.white)
-                
+
                 Circle()
                     .fill(Color.kaizenSage)
                     .frame(width: 8, height: 8)
                     .padding(.bottom, 12)
             }
-            
+
             Text("1% BETTER EVERY DAY")
                 .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.kaizenGray.opacity(0.6))
@@ -104,17 +123,18 @@ struct ImprovementView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 8)
     }
-    
+
     private var performanceCards: some View {
         VStack(spacing: 24) {
-            ForEach(MockDataProvider.mockPerformance) { mock in
+            ForEach([ExerciseType.pushups, .squats, .plank], id: \.rawValue) { type in
+                let snapshot = progressManager.progressSnapshot(for: type, profile: profile)
                 ProgressCard(
-                    title: mock.title,
-                    baseline: mock.baseline,
-                    current: mock.current,
-                    trend: mock.trend,
-                    icon: mock.icon,
-                    isTime: mock.isTime,
+                    title: snapshot.title,
+                    baseline: snapshot.baseline,
+                    current: snapshot.current,
+                    trend: snapshot.trend,
+                    icon: snapshot.icon,
+                    isTime: snapshot.isTime,
                     animate: appearanceFactor
                 )
             }
