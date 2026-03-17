@@ -9,45 +9,51 @@ struct HomeView: View {
     @Query private var profiles: [UserProfile]
     @Query(sort: \ExerciseSession.date, order: .reverse) private var sessions: [ExerciseSession]
     @Query(sort: \DailySummary.date, order: .reverse) private var summaries: [DailySummary]
-    
+
     @Binding var path: [KaizenRoute]
-    
+
     @State private var isMenuExpanded = false
     @State private var auraOffset = CGSize.zero
     @State private var heartOffsets: [CGSize] = Array(repeating: .zero, count: 8)
-    
+
     @State private var selectedTarget: ExerciseTarget? = nil
-    
+
     private var profile: UserProfile? {
         profiles.first
     }
-    
+
     private var todaySummary: DailySummary? {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         return summaries.first(where: { calendar.isDate($0.date, inSameDayAs: today) })
     }
-    
+
     private var realTargets: [ExerciseTarget] {
         [
-            ExerciseTarget(id: ExerciseType.pushups.rawValue, type: .pushups, name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .pushups), color: .kaizenSage),
-            ExerciseTarget(id: ExerciseType.squats.rawValue, type: .squats, name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .squats), color: .kaizenWood),
-            ExerciseTarget(id: ExerciseType.plank.rawValue, type: .plank, name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank), color: .kaizenGray)
+            ExerciseTarget(id: ExerciseType.pushups.rawValue, type: .pushups, name: "Pushups", current: todaySummary?.pushupsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .pushups, on: Date(), profile: profile), color: .kaizenSage),
+            ExerciseTarget(id: ExerciseType.squats.rawValue, type: .squats, name: "Squats", current: todaySummary?.squatsTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .squats, on: Date(), profile: profile), color: .kaizenWood),
+            ExerciseTarget(id: ExerciseType.plank.rawValue, type: .plank, name: "Plank", current: todaySummary?.plankTotal ?? 0, goal: progressManager.calculateDailyTarget(for: .plank, on: Date(), profile: profile), color: .kaizenGray)
         ]
     }
-    
+
     private let weekday = Date().formatted(.dateTime.weekday(.wide))
-    
+
     private var currentStreak: Int {
         profile?.currentStreak ?? 0
     }
-    
+
     private var freezesRemaining: Int {
         profile?.freezesRemaining ?? 8
     }
-    
+
     private var ritualStatus: RitualDotStatus {
         let targets = realTargets
+        if let todaySummary,
+           let profile,
+           progressManager.isDailyRitualComplete(summary: todaySummary, profile: profile, on: Date()) {
+            return .completed
+        }
+
         let completed = targets.filter { $0.current >= $0.goal }.count
         if completed == targets.count {
             return .completed
@@ -61,21 +67,21 @@ struct HomeView: View {
     var body: some View {
         ZStack {
             Color.kaizenShadow.ignoresSafeArea()
-            
+
             // MARK: - Atmospheric Layer
             RainAtmosphere()
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // MARK: - Master Identity Header
                 KaizenHeader(
                     isHome: true,
                     tier: profile?.currentSwordTier.rawValue.capitalized ?? "Wooden",
-                    aura: "Not Started",
+                    aura: profile?.progress?.auraState.rawValue.capitalized ?? "None",
                     onSettingsTap: { path.append(.settings) }
                 )
                 .padding(.top, 10)
-                
+
                 // MARK: - Streak Section
                 HStack(alignment: .bottom) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -83,14 +89,14 @@ struct HomeView: View {
                             .font(.system(size: 8, weight: .bold))
                             .foregroundColor(.kaizenGray)
                             .tracking(1)
-                        
+
                         HStack(alignment: .bottom, spacing: 10) {
                             FlipClockHero(value: currentStreak)
-                            
+
                             RitualDot(status: ritualStatus)
                                 .padding(.bottom, 12)
                         }
-                        
+
                         freezeRow
                             .padding(.top, 8)
                             .padding(.leading, -16) // Reset alignment relative to the VStack
@@ -99,14 +105,14 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, UIConstants.Spacing.lg)
                 .padding(.top, 24)
-                
+
                 Spacer()
-                
+
                 // MARK: - Today's Ritual Targets
                 targetsSection
-                
+
                 Spacer()
-                
+
                 // MARK: - Bottom Navigation
                 bottomNavBar
             }
@@ -127,7 +133,7 @@ struct HomeView: View {
                 .presentationDragIndicator(.visible)
         }
     }
-    
+
     // MARK: - Freeze Row
     private var freezeRow: some View {
         HStack(spacing: 8) {
@@ -151,10 +157,10 @@ struct HomeView: View {
             Spacer()
         }
     }
-    
+
     // MARK: - Aura Element (Deprecated/Moved to SwordHeroCard)
     // Removing old heroSection and auraElement entirely as requested to clean the middle.
-    
+
     // MARK: - Targets Section
     private var targetsSection: some View {
         VStack(spacing: 16) {
@@ -166,7 +172,7 @@ struct HomeView: View {
                 Spacer()
             }
             .padding(.leading, 4)
-            
+
             VStack(spacing: 12) {
                 ForEach(realTargets) { target in
                     ExerciseTargetCard(target: target) {
@@ -178,7 +184,7 @@ struct HomeView: View {
         }
         .padding(.horizontal, UIConstants.Spacing.lg)
     }
-    
+
     // MARK: - Bottom Nav Bar
     private var bottomNavBar: some View {
         HStack {
@@ -192,9 +198,9 @@ struct HomeView: View {
                 }
                 .foregroundColor(.kaizenGray)
             }
-            
+
             Spacer()
-            
+
             // Central Plus Button
             KaizenPlusButton(isExpanded: isMenuExpanded) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -202,9 +208,9 @@ struct HomeView: View {
                 }
             }
             .offset(y: -20)
-            
+
             Spacer()
-            
+
             Button(action: { path.append(.calendar(profile?.currentSwordTier.rawValue ?? "Wooden")) }) {
                 VStack(spacing: 8) {
                     Image(systemName: "calendar")
@@ -219,7 +225,7 @@ struct HomeView: View {
         .padding(.horizontal, 40)
         .padding(.bottom, UIConstants.Spacing.lg)
     }
-    
+
     // MARK: - Expanding Menu Overlay
     private var menuOverlay: some View {
         ZStack {
@@ -230,31 +236,31 @@ struct HomeView: View {
                 .onTapGesture {
                     closeMenu()
                 }
-            
+
             VStack(spacing: 20) {
                 Spacer()
-                
+
                 // Exercise Options - Staggered "Pop"
                 if isMenuExpanded {
                     VStack(spacing: 16) {
-                        menuItem(title: "Pushups", pr: "45 PR", icon: "figure.pushups", delay: 0.1) {
+                        menuItem(title: "Pushups", pr: bestLabel(for: .pushups), icon: "figure.pushups", delay: 0.1) {
                             closeMenu()
                             path.append(.workoutSetup(.pushups))
                         }
-                        
-                        menuItem(title: "Squats", pr: "80 PR", icon: "figure.cross.training", delay: 0.05) {
+
+                        menuItem(title: "Squats", pr: bestLabel(for: .squats), icon: "figure.cross.training", delay: 0.05) {
                             closeMenu()
                             path.append(.workoutSetup(.squats))
                         }
-                        
-                        menuItem(title: "Plank", pr: "2:00 PR", icon: "figure.strengthtraining.functional", delay: 0.0) {
+
+                        menuItem(title: "Plank", pr: bestLabel(for: .plank), icon: "figure.strengthtraining.functional", delay: 0.0) {
                             closeMenu()
                             path.append(.workoutSetup(.plank))
                         }
                     }
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-                
+
                 // Close / Large Plus Button
                 Button(action: {
                     closeMenu()
@@ -263,7 +269,7 @@ struct HomeView: View {
                         Circle()
                             .fill(Color.kaizenWhite)
                             .frame(width: 70, height: 70)
-                        
+
                         Image(systemName: "plus")
                             .font(.system(size: 30, weight: .bold))
                             .foregroundColor(.kaizenShadow)
@@ -275,7 +281,7 @@ struct HomeView: View {
             }
         }
     }
-    
+
     private func menuItem(title: String, pr: String, icon: String, delay: Double, action: @escaping () -> Void) -> some View {
         Button(action: {
             HapticManager.shared.playSessionComplete()
@@ -285,12 +291,12 @@ struct HomeView: View {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .semibold))
                     .frame(width: 24)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title.uppercased())
                         .font(.system(size: 14, weight: .bold))
                         .tracking(2)
-                    
+
                     Text(pr)
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(Color.kaizenSage)
@@ -308,7 +314,7 @@ struct HomeView: View {
         .opacity(isMenuExpanded ? 1.0 : 0.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.7).delay(delay), value: isMenuExpanded)
     }
-    
+
     // MARK: - Helper Methods
     private func closeMenu() {
         HapticManager.shared.playWorkoutStart()
@@ -316,17 +322,28 @@ struct HomeView: View {
             isMenuExpanded = false
         }
     }
-    
+
+    private func bestLabel(for type: ExerciseType) -> String {
+        let best = progressManager.currentBest(for: type)
+        guard best > 0 else { return "NO PR" }
+
+        if type == .plank {
+            return String(format: "%d:%02d PR", best / 60, best % 60)
+        }
+
+        return "\(best) PR"
+    }
+
     private func ensureProfileExists() {
         // Defensive check to avoid duplicate insertion if onAppear fires multiple times rapidly
         let descriptor = FetchDescriptor<UserProfile>()
         let existingCount = (try? modelContext.fetchCount(descriptor)) ?? 0
-        
+
         if existingCount == 0 && profiles.isEmpty {
             let newProfile = UserProfile()
             let newProgress = SwordProgress()
             newProfile.progress = newProgress
-            
+
             modelContext.insert(newProgress)
             modelContext.insert(newProfile)
             try? modelContext.save()

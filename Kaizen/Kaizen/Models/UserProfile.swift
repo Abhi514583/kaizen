@@ -25,7 +25,7 @@ final class UserProfile {
          currentStreak: Int = 0,
          freezesRemaining: Int = 8,
          cycleStartDate: Date? = Date(),
-         lastActivityDate: Date? = Date(),
+         lastActivityDate: Date? = nil,
          premiumStatus: Bool = false) {
         
         self.baselinePushups = baselinePushups

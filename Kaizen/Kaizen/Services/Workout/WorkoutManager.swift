@@ -16,36 +16,37 @@ final class WorkoutManager {
     var currentReps: Int = 0
     var currentDuration: TimeInterval = 0
     var isPaused: Bool = false
-    
+
     // MARK: - Internal Timer
     private var timer: Timer?
-    
+
     // MARK: - Initialization
     // We will use an environment-injected ModelContext
     var modelContext: ModelContext?
     var streakManager: StreakManager?
     var progressManager: ProgressManager?
-    
+
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
     }
-    
+
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
     }
-    
+
     func setStreakManager(_ manager: StreakManager) {
         self.streakManager = manager
     }
-    
+
     func setProgressManager(_ manager: ProgressManager) {
         self.progressManager = manager
     }
-    
+
     // MARK: - Session Lifecycle
-    
+
     /// Initiates a new workout session for a given exercise type
     func startWorkout(type: ExerciseType, goal: Int) {
+        stopTimer()
         let newSession = ExerciseSession(
             exerciseType: type,
             targetForThatDay: goal
@@ -54,12 +55,12 @@ final class WorkoutManager {
         currentReps = 0
         currentDuration = 0
         isPaused = false
-        
+
         if type == .plank {
             startTimer()
         }
     }
-    
+
     func togglePause() {
         isPaused.toggle()
         if isPaused {
@@ -68,69 +69,75 @@ final class WorkoutManager {
             startTimer()
         }
     }
-    
+
     func updateReps(count: Int) {
         guard !isPaused else { return }
         currentReps = count
     }
-    
+
     /// Manual increment for testing habit loop logic without pose detection.
     func addManualReps(_ count: Int) {
         guard !isPaused else { return }
         currentReps += count
     }
-    
+
     /// Manual increment for duration testing.
     func addManualDuration(_ seconds: TimeInterval) {
         guard !isPaused else { return }
         currentDuration += seconds
     }
-    
+
     func completeWorkout() {
         stopTimer()
         guard let session = activeSession else { return }
-        
+
         let sessionDate = Date()
         session.date = sessionDate
         session.repsOrDuration = session.exerciseType == .plank ? Int(currentDuration) : currentReps
         session.completed = true
-        
+
         if let context = modelContext {
             context.insert(session)
             try? context.save()
-            
+
             // Trigger DailySummary aggregation
             updateDailySummary(for: sessionDate)
-            
+
             if let profile = fetchProfile() {
-                streakManager?.onActivityCompleted(profile: profile)
                 progressManager?.updateBaselines(profile: profile)
+                streakManager?.onActivityCompleted(profile: profile)
+                progressManager?.checkCycleCompletion(profile: profile)
             }
         }
+
+        activeSession = nil
+        currentReps = 0
+        currentDuration = 0
+        isPaused = false
     }
-    
+
     private func fetchProfile() -> UserProfile? {
         guard let context = modelContext else { return nil }
         let descriptor = FetchDescriptor<UserProfile>()
         return (try? context.fetch(descriptor))?.first
     }
-    
+
     /// Aggregates all sessions for a given day into a DailySummary record.
     func updateDailySummary(for date: Date) {
         guard let context = modelContext else { return }
-        
+
         let sessions = fetchSessions(for: date)
         let summary = fetchSummary(for: date) ?? DailySummary(date: date)
-        
+
         // Reset totals before re-aggregating
         summary.pushupsTotal = 0
         summary.squatsTotal = 0
         summary.plankTotal = 0
         summary.sessionsCompleted = 0
-        
+
         for session in sessions where session.completed {
             summary.sessionsCompleted += 1
-            
+
             switch session.exerciseType {
             case .pushups:
                 summary.pushupsTotal += session.repsOrDuration
@@ -140,14 +147,14 @@ final class WorkoutManager {
                 summary.plankTotal += session.repsOrDuration
             }
         }
-        
+
         if summary.modelContext == nil {
             context.insert(summary)
         }
-        
+
         try? context.save()
     }
-    
+
     func cancelWorkout() {
         stopTimer()
         activeSession = nil
@@ -155,15 +162,17 @@ final class WorkoutManager {
         currentDuration = 0
         isPaused = false
     }
-    
+
     // MARK: - Timer Helpers
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            guard let self = self, !self.isPaused else { return }
-            self.currentDuration += 1
+            Task { @MainActor [weak self] in
+                guard let self = self, !self.isPaused else { return }
+                self.currentDuration += 1
+            }
         }
     }
-    
+
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
