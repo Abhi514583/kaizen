@@ -9,6 +9,7 @@ struct KaizenHeader: View {
     
     var body: some View {
         HStack(spacing: 0) {
+            // Left Slot: KAIZEN Branding
             if isHome {
                 brandSection
             } else {
@@ -16,48 +17,60 @@ struct KaizenHeader: View {
                     HapticManager.shared.playWorkoutStart()
                     onBack?()
                 }) {
-                    HStack(spacing: 10) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.kaizenFog)
-
+                    HStack(spacing: 6) {
                         Text("KAIZEN")
                             .font(.system(size: 20, weight: .bold))
                             .foregroundColor(.kaizenWhite)
                             .tracking(3)
+                        
+                        Circle()
+                            .fill(Color.kaizenSage)
+                            .frame(width: 6, height: 6)
+                            .padding(.bottom, 8)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .kaizenFloatingCapsule(tint: .white.opacity(0.1))
                     .contentShape(Rectangle())
                 }
             }
             
             Spacer()
             
+            // Middle Slot: Sword Artwork (Home Only)
             if isHome {
                 swordArtwork
                 Spacer()
             }
             
+            // Right Slot: Settings Gear (Home Only)
             if isHome {
                 Button(action: {
                     HapticManager.shared.playWorkoutStart()
                     onSettingsTap?()
                 }) {
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.kaizenCloud)
-                        .frame(width: 48, height: 48)
-                        .kaizenFloatingCapsule(tint: .white.opacity(0.08))
+                        .font(.system(size: 16))
+                        .foregroundColor(.kaizenGray.opacity(0.6))
                 }
             } else {
+                // Empty right slot to balance the center if needed, or just let spacer handle it
+                // For "Inside" screens, we want KAIZEN to be the only thing or aligned left.
+                // We'll leave it empty to keep KAIZEN on the far left.
                 Color.clear.frame(width: 44, height: 44)
             }
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, isHome ? 18 : 10)
-        .kaizenGlassCard(cornerRadius: 28, tint: Color.white.opacity(isHome ? 0.07 : 0.04))
+        .padding(.vertical, 10)
+        .padding(.horizontal, isHome ? 16 : 10)
+        .background(
+            Group {
+                if isHome {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.kaizenShadow.opacity(0.2))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.kaizenGray.opacity(0.05), lineWidth: 1)
+                        )
+                }
+            }
+        )
         .padding(.horizontal, UIConstants.Spacing.lg)
     }
     
@@ -75,31 +88,25 @@ struct KaizenHeader: View {
                 Text(aura.uppercased())
             }
             .font(.system(size: 8, weight: .bold))
-            .foregroundColor(.kaizenFog.opacity(0.72))
+            .foregroundColor(.kaizenGray.opacity(0.8))
         }
     }
     
     private var swordArtwork: some View {
         ZStack {
             Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.kaizenMint.opacity(0.18), Color.white.opacity(0.02)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(width: 112, height: 16)
-                .blur(radius: 8)
+                .fill(Color.kaizenSage.opacity(0.3))
+                .frame(width: 80, height: 6)
+                .blur(radius: 4)
             
             Capsule()
-                .fill(Color.kaizenCloud.opacity(0.72))
-                .frame(width: 90, height: 3)
+                .fill(Color.kaizenWhite.opacity(0.4))
+                .frame(width: 70, height: 2)
             
             Rectangle()
-                .fill(Color.kaizenCloud.opacity(0.65))
-                .frame(width: 2, height: 16)
-                .offset(x: -30)
+                .fill(Color.kaizenWhite.opacity(0.6))
+                .frame(width: 1.5, height: 10)
+                .offset(x: -25)
         }
     }
 }

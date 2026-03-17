@@ -13,7 +13,7 @@ struct RitualDot: View {
     var body: some View {
         Circle()
             .fill(dotColor)
-            .frame(width: 12, height: 12)
+            .frame(width: 8, height: 8)
             .opacity(status == .inProgress ? flickerOpacity : 1.0)
             .overlay(
                 Circle()
@@ -38,11 +38,12 @@ struct RitualDot: View {
     private var dotColor: Color {
         switch status {
         case .notStarted:
-            return .kaizenEmber
+            return .red
         case .inProgress:
+            // Amber/Gold for "Soothing" but active flicker
             return Color(red: 1.0, green: 0.8, blue: 0.0)
         case .completed:
-            return .kaizenMint
+            return .kaizenSage
         }
     }
     

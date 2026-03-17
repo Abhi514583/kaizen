@@ -11,21 +11,20 @@ struct SessionCompleteView: View {
     
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color.kaizenShadow, Color(red: 0.12, green: 0.14, blue: 0.13)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
+            // MARK: - Immersive Background
+            Color.kaizenShadow.ignoresSafeArea()
+            
+            // Subtle Ambient Glow
             Circle()
-                .fill(Color.kaizenMint.opacity(0.14))
+                .fill(Color.kaizenSage.opacity(0.1))
                 .frame(width: 400, height: 400)
                 .blur(radius: 80)
                 .offset(y: -100)
             
             VStack(spacing: 30) {
+                // MARK: - Share Card
                 VStack(spacing: 0) {
+                    // Card Header
                     HStack {
                         Text("KAIZEN")
                             .font(.system(size: 14, weight: .black))
@@ -38,32 +37,36 @@ struct SessionCompleteView: View {
                     }
                     .padding(20)
                     
+                    // Central Sword Visual
                     ZStack {
                         Circle()
-                            .fill(Color.kaizenMint.opacity(0.14))
-                            .frame(width: 180, height: 180)
-                            .blur(radius: 30)
+                            .fill(Color.kaizenSage.opacity(0.1))
+                            .frame(width: 140, height: 140)
+                            .blur(radius: 20)
                         
+                        // Sword Asset Placeholder
                         VStack(spacing: 8) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                    .fill(.regularMaterial)
-                                    .frame(width: 92, height: 92)
-                                    .overlay(
-                                        Image(systemName: successIcon)
-                                            .font(.system(size: 34, weight: .medium))
-                                            .foregroundColor(.kaizenMint)
-                                    )
+                                Capsule()
+                                    .fill(Color.kaizenWhite.opacity(0.8))
+                                    .frame(width: 4, height: 100)
+                                    .shadow(color: Color.kaizenSage.opacity(0.5), radius: 10)
+                                
+                                Rectangle()
+                                    .fill(Color.kaizenWhite)
+                                    .frame(width: 30, height: 2)
+                                    .offset(y: 20)
                             }
                             
                             Text("WOODEN TIER")
                                 .font(.system(size: 10, weight: .black))
-                                .foregroundColor(.kaizenMint)
+                                .foregroundColor(.kaizenSage)
                                 .tracking(2)
                         }
                     }
                     .padding(.vertical, 20)
                     
+                    // Stats Section
                     VStack(spacing: 4) {
                         Text(exerciseType == .plank ? 
                              String(format: "%02d:%02d", count / 60, count % 60) : 
@@ -73,17 +76,18 @@ struct SessionCompleteView: View {
                         
                         Text(exerciseType.rawValue.uppercased())
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.kaizenMint)
+                            .foregroundColor(.kaizenSage)
                             .tracking(6)
                     }
                     .padding(.bottom, 20)
                     
+                    // Streak Integration
                     HStack(spacing: 15) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("STREAK")
                                 .font(.system(size: 8, weight: .black))
-                                .foregroundColor(.kaizenFog.opacity(0.58))
-                            Text((profiles.first?.currentStreak ?? 0) > 0 ? "PRESERVED" : "READY")
+                                .foregroundColor(.kaizenGray)
+                            Text("PRESERVED")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(.kaizenWhite)
                         }
@@ -96,13 +100,22 @@ struct SessionCompleteView: View {
                             .frame(width: 70, height: 50)
                     }
                     .padding(20)
-                    .background(Color.black.opacity(0.18))
+                    .background(Color.kaizenShadow.opacity(0.5))
                 }
-                .kaizenGlassCard(cornerRadius: 34, tint: Color.kaizenMint.opacity(0.08))
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(Color.kaizenShadow)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 24)
+                                .stroke(Color.kaizenSage.opacity(0.2), lineWidth: 1)
+                        )
+                )
                 .padding(.horizontal, 30)
+                .shadow(color: .black.opacity(0.5), radius: 30, x: 0, y: 20)
                 .scaleEffect(showContent ? 1.0 : 0.8)
                 .opacity(showContent ? 1.0 : 0)
                 
+                // MARK: - Action Floor
                 if showContent {
                     VStack(spacing: 16) {
                         Button(action: {
@@ -152,14 +165,6 @@ struct SessionCompleteView: View {
                 showContent = true
                 HapticManager.shared.playSessionComplete()
             }
-        }
-    }
-
-    private var successIcon: String {
-        switch exerciseType {
-        case .pushups: return "figure.pushups"
-        case .squats: return "figure.cross.training"
-        case .plank: return "figure.strengthtraining.functional"
         }
     }
 }

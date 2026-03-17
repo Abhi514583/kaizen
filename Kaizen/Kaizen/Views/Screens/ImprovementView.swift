@@ -25,12 +25,7 @@ struct ImprovementView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [Color.kaizenShadow, Color(red: 0.12, green: 0.14, blue: 0.13)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            Color.kaizenShadow.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 KaizenHeader(isHome: false, onBack: { dismiss() })
@@ -89,18 +84,20 @@ struct ImprovementView: View {
             Spacer()
         }
         .padding(.vertical, 24)
-        .kaizenGlassCard(cornerRadius: 28, tint: Color.kaizenMint.opacity(0.06))
+        .background(Color.white.opacity(0.03))
+        .cornerRadius(20)
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.05), lineWidth: 1))
     }
 
     private func summaryItem(number: String, label: String) -> some View {
         VStack(spacing: 4) {
             Text(number)
                 .font(.system(size: 28, weight: .black, design: .rounded))
-                .foregroundColor(.kaizenMint)
+                .foregroundColor(.kaizenSage)
             Text(label.uppercased())
                 .font(.system(size: 8, weight: .bold))
-                .foregroundColor(.kaizenFog.opacity(0.58))
-                .tracking(2)
+                .foregroundColor(.kaizenGray)
+                .tracking(1)
         }
     }
 
@@ -120,7 +117,7 @@ struct ImprovementView: View {
 
             Text("1% BETTER EVERY DAY")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.kaizenFog.opacity(0.58))
+                .foregroundColor(.kaizenGray.opacity(0.6))
                 .tracking(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

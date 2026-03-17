@@ -15,7 +15,7 @@ struct ProgressCard: View {
             sparklineSection
         }
         .padding(24)
-        .kaizenGlassCard(cornerRadius: 30, tint: Color.kaizenMint.opacity(0.08))
+        .background(cardBackground)
     }
     
     private var headerRow: some View {
@@ -37,10 +37,8 @@ struct ProgressCard: View {
             let improvement: Int = baseline > 0 ? Int((Double(current - baseline) / Double(baseline)) * 100) : 0
             Text("+\(improvement)%")
                 .font(.system(size: 10, weight: .bold))
-                .foregroundColor(.kaizenMint)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .kaizenFloatingCapsule(tint: Color.kaizenMint.opacity(0.08))
+                .foregroundColor(.kaizenSage.opacity(0.6))
+                .padding(.top, 4)
         }
     }
     
@@ -53,14 +51,23 @@ struct ProgressCard: View {
                 .offset(y: 20 - (CGFloat(trend[0]) * 40))
             
             Sparkline(data: trend, completion: animate)
-                .stroke(Color.kaizenMint, lineWidth: 2.5)
+                .stroke(Color.kaizenSage, lineWidth: 2)
                 .frame(height: 40)
                 .background(
                     Sparkline(data: trend, completion: animate)
-                        .stroke(Color.kaizenMint.opacity(0.22), lineWidth: 5)
+                        .stroke(Color.kaizenSage.opacity(0.2), lineWidth: 4)
                         .blur(radius: 4)
                 )
         }
+    }
+    
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .fill(Color.white.opacity(0.03))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.05), lineWidth: 1)
+            )
     }
     
     private func statLabel(label: String, value: String, isHero: Bool = false) -> some View {
@@ -70,7 +77,7 @@ struct ProgressCard: View {
                 .foregroundColor(.kaizenGray)
             Text(value)
                 .font(.system(size: 10, weight: .black))
-                .foregroundColor(isHero ? .kaizenMint : .white)
+                .foregroundColor(isHero ? .kaizenSage : .white)
         }
     }
 }

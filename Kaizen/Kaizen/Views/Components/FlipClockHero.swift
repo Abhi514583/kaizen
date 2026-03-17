@@ -17,22 +17,24 @@ struct FlipClockHero: View {
     
     private func digitCard(for digit: Int) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.thinMaterial)
+            // Background card
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.kaizenShadow.opacity(0.6))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.kaizenGray.opacity(0.1), lineWidth: 1)
                 )
             
+            // The split line
             Rectangle()
-                .fill(Color.white.opacity(0.06))
+                .fill(Color.kaizenGray.opacity(0.05))
                 .frame(height: 1)
             
+            // The digit
             Text("\(digit)")
-                .font(.system(size: 64, weight: .bold, design: .rounded))
-                .foregroundColor(.kaizenCloud)
+                .font(.system(size: 60, weight: .bold, design: .rounded))
+                .foregroundColor(.kaizenWhite)
         }
-        .frame(width: 58, height: 88)
-        .shadow(color: Color.black.opacity(0.18), radius: 16, x: 0, y: 12)
+        .frame(width: 50, height: 75)
     }
 }
