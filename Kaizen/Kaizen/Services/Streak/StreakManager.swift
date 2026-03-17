@@ -33,51 +33,76 @@ final class StreakManager {
     func validateDailyStreak(profile: UserProfile) {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let lastActivity = calendar.startOfDay(for: profile.lastActivityDate ?? Date())
+        let lastActivity = calendar.startOfDay(for: profile.lastActivityDate ?? today)
         
-        guard let daysBetween = calendar.dateComponents([.day], from: lastActivity, to: today).day, daysBetween > 0 else {
-            if profile.lastActivityDate == nil {
-                profile.lastActivityDate = today
-                try? modelContext?.save()
-            }
-            return // Still on the same day or somehow in the past
+        if profile.lastActivityDate == nil {
+            profile.lastActivityDate = today
+            try? modelContext?.save()
+            return
         }
         
-        // daysBetween = 1 means they last worked out yesterday (perfect)
-        // daysBetween = 2 means they missed 1 day (yesterday)
-        let missedDays = daysBetween - 1
+        guard let daysBetween = calendar.dateComponents([.day], from: lastActivity, to: today).day, daysBetween > 0 else {
+            return
+        }
         
-        if missedDays > 0 {
-            for i in 0..<missedDays {
-                guard let missedDate = calendar.date(byAdding: .day, value: i + 1, to: lastActivity) else { continue }
+        // We check every day from (lastActivity + 1) up to yesterday (which is today - 1)
+        for i in 1...daysBetween {
+            guard let dateToCheck = calendar.date(byAdding: .day, value: i, to: lastActivity) else { continue }
+            
+            // If dateToCheck is today, we don't penalize yet.
+            if dateToCheck >= today { break }
+            
+            // Check DailySummary for dateToCheck
+            var isSatisfied = false
+            if let context = modelContext {
+                let descriptor = FetchDescriptor<DailySummary>(
+                    predicate: #Predicate<DailySummary> { $0.date == dateToCheck }
+                )
+                if let summary = try? context.fetch(descriptor).first {
+                    if summary.sessionsCompleted > 0 || summary.freezeUsed {
+                        isSatisfied = true
+                    }
+                }
+            }
+            
+            if !isSatisfied {
                 if profile.freezesRemaining > 0 {
-                    consumeFreeze(profile: profile, on: missedDate)
+                    consumeFreeze(profile: profile, on: dateToCheck)
                 } else {
                     breakStreak(profile: profile)
                     progressManager?.handleDemotion(profile: profile)
+                    // Reset the baseline so we don't keep demoting
+                    profile.lastActivityDate = today
                     break
                 }
             }
         }
         
-        // Move the tracker up to today so we don't double-penalize
-        profile.lastActivityDate = today
         try? modelContext?.save()
     }
     
     /// Increments streak if the day's first session is completed.
     func onActivityCompleted(profile: UserProfile) {
         let calendar = Calendar.current
+        let todayStart = calendar.startOfDay(for: Date())
         
-        // If the user already worked out today, don't increment again
-        if let lastActivity = profile.lastActivityDate, calendar.isDateInToday(lastActivity) && profile.currentStreak > 0 {
-            // Already incremented today
-            return
+        var sessionsToday = 0
+        if let context = modelContext {
+            let descriptor = FetchDescriptor<DailySummary>(
+                predicate: #Predicate<DailySummary> { $0.date == todayStart }
+            )
+            if let summary = try? context.fetch(descriptor).first {
+                sessionsToday = summary.sessionsCompleted
+            }
         }
         
-        profile.currentStreak += 1
-        profile.lastActivityDate = Date()
-        try? modelContext?.save()
+        // If this is the FIRST session completed today, increment streak.
+        // If sessionsToday > 1, the streak was already incremented earlier today.
+        if sessionsToday <= 1 {
+            profile.currentStreak += 1
+            profile.lastActivityDate = Date()
+            try? modelContext?.save()
+        }
     }
     
     private func consumeFreeze(profile: UserProfile, on date: Date) {

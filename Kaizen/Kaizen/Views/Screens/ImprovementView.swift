@@ -39,13 +39,14 @@ struct ImprovementView: View {
     
     private var summaryModule: some View {
         HStack {
+            Spacer()
             summaryItem(number: "6 / 7", label: "Days Active")
             Spacer()
             Divider().background(Color.white.opacity(0.1)).frame(height: 40)
             Spacer()
             summaryItem(number: "10", label: "Day Streak")
+            Spacer()
         }
-        .padding(.horizontal, 40)
         .padding(.vertical, 24)
         .background(Color.white.opacity(0.03))
         .cornerRadius(20)

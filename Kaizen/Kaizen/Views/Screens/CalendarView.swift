@@ -445,10 +445,12 @@ struct YearlyHeatmapView: View {
     
     private func dateFor(month: Int, day: Int) -> Date? {
         var comps = DateComponents()
-        comps.year = Calendar.current.component(.year, from: Date())
+        let calendar = Calendar.current
+        comps.year = calendar.component(.year, from: Date())
         comps.month = month
         comps.day = day
-        return Calendar.current.date(from: comps)
+        guard comps.isValidDate(in: calendar) else { return nil }
+        return calendar.date(from: comps)
     }
 }
 
