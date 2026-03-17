@@ -27,7 +27,7 @@ struct ContentView: View {
                     case .workoutSetup(let type):
                         WorkoutSetupView(path: $navigationPath, exerciseType: type)
                     case .activeWorkout(let type):
-                        WorkoutView(path: $navigationPath, exerciseName: type.rawValue, pr: "45 PR", goal: 50)
+                        WorkoutView(path: $navigationPath, exerciseName: type.rawValue, pr: "", goal: 0)
                     case .sessionComplete(let type, let count):
                         SessionCompleteView(path: $navigationPath, exerciseType: type, count: count)
                     }

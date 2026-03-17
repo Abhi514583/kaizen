@@ -29,6 +29,8 @@ struct KaizenApp: App {
     @State private var workoutManager = WorkoutManager()
     @State private var streakManager = StreakManager()
     @State private var progressManager = ProgressManager()
+    @State private var cameraManager = CameraManager()
+    @State private var visionManager = VisionManager()
 
     var body: some Scene {
         WindowGroup {
@@ -36,16 +38,24 @@ struct KaizenApp: App {
                 .environment(workoutManager)
                 .environment(streakManager)
                 .environment(progressManager)
+                .environment(cameraManager)
+                .environment(visionManager)
                 .onAppear {
                     let context = sharedModelContainer.mainContext
                     workoutManager.setModelContext(context)
                     streakManager.setModelContext(context)
                     progressManager.setModelContext(context)
-                    
+
                     // Connect services
                     workoutManager.setStreakManager(streakManager)
                     workoutManager.setProgressManager(progressManager)
+                    workoutManager.setVisionManager(visionManager)
                     streakManager.setProgressManager(progressManager)
+
+                    // Wire camera → vision
+                    visionManager.cameraManager = cameraManager
+                    cameraManager.frameDelegate = visionManager
+                    cameraManager.checkPermissionsAndSetup()
                 }
         }
         .modelContainer(sharedModelContainer)

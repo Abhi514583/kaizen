@@ -21,6 +21,7 @@ enum TrackingError: Error, LocalizedError, Equatable {
     case outOfFrame
     case lowConfidence
     case unauthorized
+    case cameraUnavailable
     
     var errorDescription: String? {
         switch self {
@@ -32,6 +33,8 @@ enum TrackingError: Error, LocalizedError, Equatable {
             return "Adjust phone position"
         case .unauthorized:
             return "Camera access required"
+        case .cameraUnavailable:
+            return "Camera unavailable"
         }
     }
 }
